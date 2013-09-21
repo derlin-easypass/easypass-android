@@ -37,24 +37,42 @@ public class JsonManager {
      */
     public void serialize( Object data, String algo, String filepath,
                            String password ) throws IOException {
+       this.serialize( data, algo, new FileOutputStream( filepath ), password );
+    }// end serialize
 
-        FileOutputStream fos = null;
 
+    /**
+     * encrypts the arraylist of objects with the cipher given in parameter and
+     * serializes it in json format.
+     *
+     * @param data     the data
+     * @param algo     the algorithm (aes-128-cbc for example, see the openssl conventions)
+     * @param outStream the output stream to write to
+     * @param password the password
+     * @throws java.io.IOException
+     */
+    public void serialize( Object data, String algo, OutputStream outStream,
+                           String password ) throws IOException {
+
+        if( outStream == null ) {
+            throw new IllegalStateException( "The outputstream cannot be null " +
+                    "!" +
+                    "" );
+        }
         try {
 
             Gson gson = new GsonBuilder().create();
-            fos = new FileOutputStream( filepath );
 
-            fos.write( OpenSSL.encrypt( algo, password.toCharArray(),
+            outStream.write( OpenSSL.encrypt( algo, password.toCharArray(),
                     gson.toJson( data ).getBytes( "UTF-8" ) ) );
-            fos.write( "\r\n".getBytes() );
-            fos.write( System.getProperty( "line.separator" ).getBytes() );
-            fos.flush();
+            outStream.write( "\r\n".getBytes() );
+            outStream.write( System.getProperty( "line.separator" ).getBytes() );
+            outStream.flush();
 
         } catch( GeneralSecurityException e ) {
             e.printStackTrace();
         } finally {
-            if( fos != null ) fos.close();
+            outStream.close();
         }
 
     }// end serialize

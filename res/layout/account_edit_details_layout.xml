@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent">
+
+    <!--buttons at the bottom of the screen-->
+    <LinearLayout
+        android:id="@+id/buttons_container"
+        android:orientation="horizontal"
+        android:layout_alignParentBottom="true"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:paddingLeft="5dp">
+
+        <Button
+            android:id="@+id/details_cancel_button"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.5"
+            android:layout_width="0dp"
+            android:text="@string/cancel" />
+
+        <Button
+            android:id="@+id/details_save_button"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.5"
+            android:layout_width="0dp"
+            android:text="@string/save" />
+
+    </LinearLayout>
+
+    <!--scrollview : container for main content-->
+    <ScrollView
+        android:layout_above="@id/buttons_container"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent">
+
+        <!--gridlayout with two columns-->
+        <GridLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="5dp"
+            android:columnCount="2"
+            android:useDefaultMargins="false">
+
+            <!--infos header-->
+            <TextView
+                android:layout_columnSpan="2"
+                style="@style/header"
+                android:text="Infos" />
+
+            <View
+                style="@style/Divider"
+                android:layout_columnSpan="2"
+                android:layout_marginBottom="3dp" />
+
+            <!--name-->
+            <TextView
+                style="@style/details_label"
+                android:text="Name" />
+
+            <EditText
+                android:id="@+id/details_name"
+                style="@style/details_edit_value"
+                android:text="sdlfkjsj" />
+
+            <!--pseudo-->
+            <TextView
+                style="@style/details_label"
+                android:text="Pseudo" />
+
+            <EditText
+                android:id="@+id/details_pseudo"
+                style="@style/details_edit_value"
+                android:text="sdlfkjsj" />
+
+            <!--email-->
+            <TextView
+                style="@style/details_label"
+                android:text="Email" />
+
+            <EditText
+                android:id="@+id/details_email"
+                style="@style/details_edit_value"
+                android:inputType="text|textEmailAddress"
+                android:text="sdlfkjsj" />
+
+            <!--password-->
+            <TextView
+                style="@style/details_label"
+                android:text="Password" />
+
+            <EditText
+                style="@style/details_edit_value"
+                android:id="@+id/details_password"
+                android:inputType="text|textVisiblePassword" />
+
+            <!--show password-->
+            <CheckBox
+                style="@style/details_font"
+                android:id="@+id/details_show_password"
+                android:layout_columnSpan="2"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:text="show password"
+
+                />
+
+            <!--notes header-->
+            <TextView
+                style="@style/header"
+                android:layout_columnSpan="2"
+                android:text="Notes" />
+
+            <View
+                style="@style/Divider"
+                android:layout_columnSpan="2" />
+
+
+            <!--notes field-->
+            <EditText
+                android:layout_columnSpan="2"
+                android:id="@+id/details_notes"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                style="@style/details_font"
+                android:layout_marginTop="6dp"
+                android:padding="5dp" />
+
+        </GridLayout>
+
+    </ScrollView>
+
+
+</RelativeLayout>

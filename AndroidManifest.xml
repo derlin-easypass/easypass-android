@@ -32,6 +32,11 @@
             android:configChanges="orientation|screenSize"
             android:label="@string/app_name" >
         </activity>
+        <activity
+            android:name="linder.easypass.what.EditAccountActivity"
+            android:configChanges="orientation|screenSize"
+            android:label="@string/app_name" >
+        </activity>
 
 
         <!--dropbox activity-->

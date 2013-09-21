@@ -25,4 +25,9 @@
     <string name="pref_key_sessions_path">session path</string>
     <string name="pref_key_password_caching">password caching</string>
     <string name="settings">settings</string>
+    <string name="save">Save</string>
+    <string name="edit">edit</string>
+    <string name="menu_show_details">Show details</string>
+    <string name="menu_copy_pass">Copy pass</string>
+    <string name="search">search</string>
 </resources>

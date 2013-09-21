@@ -13,10 +13,11 @@ public class DataWrapper {
     private List<Account> data;
     private String sessionName, password;
 
+
     public DataWrapper( List<Object[]> data, String sessionName, String password ) {
         this.sessionName = sessionName;
         this.password = password;
-        if(data != null) setData( data );
+        if( data != null ) setData( data );
 
     }
 
@@ -31,7 +32,7 @@ public class DataWrapper {
 
     public List<String> getAccountNames() {
         List<String> names = new ArrayList<String>();
-        if(data == null) return names;
+        if( data == null ) return names;
 
         for( Account session : data ) {
             names.add( session.getName() );
@@ -50,6 +51,7 @@ public class DataWrapper {
 
 
     public boolean replaceAccount( Account oldAccount, Account newAccount ) {
+        if( oldAccount.equals( newAccount ) ) return false;
         data.remove( oldAccount );
         data.add( newAccount );
         return true;
@@ -79,5 +81,11 @@ public class DataWrapper {
 
     public String getSessionName() {
         return sessionName;
+    }
+
+
+    public void removeAccount( String accountName ) {
+        Account account = getAccount( accountName );
+        if( account != null ) data.remove( account );
     }
 }//end class

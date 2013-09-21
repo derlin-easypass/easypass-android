@@ -1,21 +1,23 @@
 package linder.easypass;
 
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v4.app.Fragment;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
+import android.view.*;
+import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.TextView;
 import com.dropbox.sync.android.*;
+import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.woozzu.android.widget.IndexableListView;
-import linder.easypass.what.DataWrapper;
-import linder.easypass.what.IndexerAdapter;
-import linder.easypass.what.JsonManager;
+import linder.easypass.what.*;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
@@ -23,14 +25,24 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 
-public class NoteDetailFragment extends Fragment {
-    private static final String TAG = NoteDetailFragment.class.getName();
+import static linder.easypass.EasyPassApplication.TAG;
 
+public class NoteDetailFragment extends Fragment {
+
+    // keys to the bundle's extras
     private static final String ARG_PATH = "path";
-    private static final String CRYPTO_ALGORITHM = "aes-128-cbc";
     private static final String ARG_PASS = "password";
 
-    private EditText mText;
+    // algo for the deserialisation of data
+    private static final String CRYPTO_ALGORITHM = "aes-128-cbc";
+    // request codes for startActivityForResult calls
+    private static final int EDIT_REQUEST_CODE = 9;
+
+    // context menu items
+    private static final int MENU_COPY_PASS = 0, MENU_SHOW_DETAILS = 1, MENU_EDIT = 2,
+            MENU_DELETE = 3;
+
+
     private TextView mErrorMessage;
     private View mOldVersionWarningView;
     private View mLoadingSpinner;
@@ -89,6 +101,12 @@ public class NoteDetailFragment extends Fragment {
             }
         }
     };
+    private EditText inputSearch;
+
+
+    /* *****************************************************************
+     * constructors
+     * ****************************************************************/
 
 
     public NoteDetailFragment() {
@@ -104,6 +122,10 @@ public class NoteDetailFragment extends Fragment {
         return fragment;
     }
 
+    /* *****************************************************************
+     * override common activity/fragment methods
+     * ****************************************************************/
+
 
     @Override
     public View onCreateView( LayoutInflater inflater, ViewGroup container,
@@ -115,8 +137,21 @@ public class NoteDetailFragment extends Fragment {
         dataWrapper = new DataWrapper( null, mCurrentSessionName, mCurrentPassword );
         mAdapter = new IndexerAdapter( getActivity(), android.R.layout.simple_list_item_1,
                 new ArrayList<String>() );
+        mAdapter.setDataWrapperReference( dataWrapper );
         mList.setAdapter( mAdapter );
         mList.setFastScrollEnabled( true );
+        registerForContextMenu( mList );
+
+        // adds a listener to filter the accounts on text change
+        inputSearch = ( EditText ) view.findViewById( R.id.inputSearch );
+        inputSearch.addTextChangedListener( new TextWatcherAdapter( inputSearch,
+                new TextWatcherAdapter.TextWatcherListener() {
+
+            @Override
+            public void onTextChanged( EditText view, String text ) {
+                mAdapter.getFilter().filter( text );
+            }
+        } ) );
 
         mOldVersionWarningView = view.findViewById( R.id.old_version );
         mLoadingSpinner = view.findViewById( R.id.note_loading );
@@ -127,12 +162,40 @@ public class NoteDetailFragment extends Fragment {
 
 
     @Override
+    public void onActivityResult( int requestCode, int resultCode, Intent data ) {
+        if( requestCode == EDIT_REQUEST_CODE ) {
+            if( resultCode == Activity.RESULT_OK ) {
+                Bundle extras = data.getExtras();
+                Account originalAccount = dataWrapper.getAccount( extras.getString(
+                        EditAccountActivity.EXTRA_ORIGINAL_ACCOUNT_NAME ) );
+                Account editedAccount = new Gson().fromJson( extras.getString(
+                        EditAccountActivity.EXTRA_ACCOUNT_KEY ), Account.class );
+
+                // if return false, it means the two accounts are identical
+                if( !dataWrapper.replaceAccount( originalAccount, editedAccount ) ) return;
+                String oldName = originalAccount.getNameOrDefault();
+
+                if( !originalAccount.getNameOrDefault().equals( editedAccount.getNameOrDefault()
+                ) ) {
+                    int position = mAdapter.getPosition( oldName );
+                    mAdapter.remove( oldName );
+                    mAdapter.insert( editedAccount.getNameOrDefault(), position );
+                    mAdapter.notifyDataSetChanged();
+                }
+                mUserHasModifiedText = true;
+            }
+
+        } else {
+            super.onActivityResult( requestCode, resultCode, data );
+        }
+    }
+
+
+    @Override
     public void onResume() {
         super.onResume();
 
-        //        mText.setEnabled( false );
-        //        mText.setText( "" );
-        mUserHasModifiedText = false;
+        //        mUserHasModifiedText = false;
         mHasLoadedAnyData = false;
 
         DbxPath path = new DbxPath( getArguments().getString( ARG_PATH ) );
@@ -153,14 +216,6 @@ public class NoteDetailFragment extends Fragment {
         mErrorMessage.setVisibility( View.GONE );
         mLoadingSpinner.setVisibility( View.VISIBLE );
 
-        /*
-         * Since mFile is written asynchronously after onPause, it's possible
-         * that the activity is resumed again before a write finishes. This
-         * semaphore prevents us from trying to re-open the file while it's
-         * still being written in the background - we hold it whenever mFile is
-         * in use, and release it when the write is finished and we're done with
-         * the file.
-         */
         try {
             mFileUseSemaphore.acquire();
         } catch( InterruptedException e ) {
@@ -204,8 +259,6 @@ public class NoteDetailFragment extends Fragment {
 
             // If the contents have changed, write them back to Dropbox
             if( mUserHasModifiedText && mFile != null ) {
-                //                final String newContents = mText.getText().toString();
-                final String newContents = "";
                 mUserHasModifiedText = false;
 
                 // Start a thread to do the write.
@@ -215,8 +268,13 @@ public class NoteDetailFragment extends Fragment {
                         Log.d( TAG, "starting write" );
                         synchronized( mFileLock ) {
                             try {
-                                mFile.writeString( newContents );
-                            } catch( IOException e ) {
+
+                                new JsonManager().serialize( dataWrapper.getArrayOfObjects(),
+                                        CRYPTO_ALGORITHM, mFile.getWriteStream(),
+                                        mCurrentPassword );
+
+                            } catch( Exception e ) {
+
                                 Log.e( TAG, "failed to write to file", e );
                             }
                             mFile.close();
@@ -226,6 +284,7 @@ public class NoteDetailFragment extends Fragment {
                         mFileUseSemaphore.release();
                     }
                 } ).start();
+
             } else {
                 mFile.close();
                 mFile = null;
@@ -233,6 +292,78 @@ public class NoteDetailFragment extends Fragment {
             }
         }
     }
+
+    /* *****************************************************************
+     * context menu management
+     * ****************************************************************/
+
+
+    @Override
+    public void onCreateContextMenu( ContextMenu menu, View v, ContextMenu.ContextMenuInfo
+            menuInfo ) {
+        if( v.getId() == R.id.listview ) {
+            AdapterView.AdapterContextMenuInfo info = ( AdapterView.AdapterContextMenuInfo )
+                    menuInfo;
+            menu.setHeaderTitle( mAdapter.getItem( info.position ) );
+            menu.add( Menu.NONE, MENU_COPY_PASS, Menu.NONE, R.string.menu_copy_pass );
+            menu.add( Menu.NONE, MENU_SHOW_DETAILS, Menu.NONE, R.string.menu_show_details );
+            menu.add( Menu.NONE, MENU_EDIT, Menu.NONE, R.string.edit );
+            menu.add( Menu.NONE, MENU_DELETE, Menu.NONE, R.string.menu_delete );
+        }
+    }
+
+
+    @Override
+    public boolean onContextItemSelected( MenuItem item ) {
+        AdapterView.AdapterContextMenuInfo info = ( AdapterView.AdapterContextMenuInfo ) item
+                .getMenuInfo();
+        int menuItemIndex = item.getItemId();
+        final String accountName = mList.getItemAtPosition( info.position ).toString();
+
+        switch( menuItemIndex ) {
+
+            case MENU_COPY_PASS:
+                break;
+
+            case MENU_SHOW_DETAILS:
+                break;
+
+            case MENU_EDIT:
+                if( accountName == null ) break;
+                Intent intent = new Intent( getActivity(), EditAccountActivity.class );
+                intent.putExtra( Intent.EXTRA_TEXT, new Gson().toJson( dataWrapper.getAccount(
+                        accountName ) ) );
+                startActivityForResult( intent, EDIT_REQUEST_CODE );
+                break;
+
+            case MENU_DELETE:
+                AlertDialog.Builder builder = new AlertDialog.Builder( getActivity() );
+                builder.setMessage( "Are you sure ?" ).setCancelable( false ).setTitle( "Confirm " +
+                        "" + "delete" );
+
+                builder.setPositiveButton( "YES", new DialogInterface.OnClickListener() {
+                    public void onClick( DialogInterface dialog, int id ) {
+                        dataWrapper.removeAccount( accountName );
+                        mAdapter.remove( accountName );
+                        mAdapter.notifyDataSetChanged();
+                        mUserHasModifiedText = true;
+                    }
+                } );
+
+                builder.setNegativeButton( "NO", new DialogInterface.OnClickListener() {
+                    public void onClick( DialogInterface dialog, int id ) {
+                        dialog.cancel();
+                    }
+                } );
+
+                builder.create().show();
+                break;
+        }// end switch
+        return true;
+    }
+     /* *****************************************************************
+     * sync management
+     * ****************************************************************/
 
 
     private void startUpdateOnBackgroundThread() {
@@ -272,9 +403,8 @@ public class NoteDetailFragment extends Fragment {
                             mHandler.sendLoadFailedMessage( "wrong credentials" );
                             e.printStackTrace();
                             return;
-                        }catch(Exception e){
-                           mHandler.sendLoadFailedMessage( "Sorry, but an unknown error occured"
-                           );
+                        } catch( Exception e ) {
+                            mHandler.sendLoadFailedMessage( "Sorry, but an unknown error occured" );
                             e.printStackTrace();
                             return;
                         }
@@ -294,19 +424,23 @@ public class NoteDetailFragment extends Fragment {
     }
 
 
-    private void applyNewText( List<Object[]> data ) {
+    private void applyNewData( List<Object[]> data ) {
         if( mUserHasModifiedText || data == null ) {
             return;
         }
-
         dataWrapper.setData( data );
         mAdapter.clear();
         mAdapter.addAll( dataWrapper.getAccountNames() );
         mAdapter.notifyDataSetChanged();
+        mAdapter.getFilter().filter( inputSearch.getText() );
         // explicitly reset mChanged to false since the setText above changed it to true
         mUserHasModifiedText = false;
     }
 
+
+    /* *****************************************************************
+     * Message handler
+     * ****************************************************************/
 
     private static class DbxLoadHandler extends Handler {
 
@@ -352,19 +486,17 @@ public class NoteDetailFragment extends Fragment {
                     Log.e( TAG, "Somehow user changed text while an update was in progress!" );
                 }
 
-                //                frag.mText.setVisibility( View.VISIBLE );
                 frag.mLoadingSpinner.setVisibility( View.GONE );
                 frag.mErrorMessage.setVisibility( View.GONE );
 
                 boolean gotNewData = msg.arg1 != 0;
                 if( gotNewData ) {
                     List<Object[]> contents = ( List<Object[]> ) msg.obj;
-                    frag.applyNewText( contents );
+                    frag.applyNewData( contents );
                 }
 
             } else if( msg.what == MESSAGE_LOAD_FAILED ) {
                 String errorText = ( String ) msg.obj;
-                //                frag.mText.setVisibility( View.GONE );
                 frag.mLoadingSpinner.setVisibility( View.GONE );
                 frag.mErrorMessage.setText( errorText );
                 frag.mErrorMessage.setVisibility( View.VISIBLE );

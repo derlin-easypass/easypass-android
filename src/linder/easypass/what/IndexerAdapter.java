@@ -6,6 +6,7 @@ import android.widget.Filter;
 import android.widget.SectionIndexer;
 import com.woozzu.android.util.StringMatcher;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,14 +18,13 @@ import java.util.List;
 public class IndexerAdapter extends ArrayAdapter<String> implements SectionIndexer {
 
     private final static String SECTIONS = "#ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    private DataWrapper dataWrapper;
+    private WeakReference<DataWrapper> dataWrapperReference;
     private SessionsFilter filter;
 
 
     public IndexerAdapter( Context context, int textViewResourceId, List<String> objects ) {
         super( context, textViewResourceId, objects );
     }
-
 
     @Override
     public int getPositionForSection( int section ) {
@@ -66,12 +66,8 @@ public class IndexerAdapter extends ArrayAdapter<String> implements SectionIndex
     }
 
 
-    public void updateWrapper( DataWrapper wrapper ) {
-        if( wrapper != null ) {
-            dataWrapper = wrapper;
-            super.clear();
-            super.addAll( dataWrapper.getAccountNames() );
-        }
+    public void setDataWrapperReference( DataWrapper wrapper ) {
+        dataWrapperReference = new WeakReference<DataWrapper>( wrapper );
     }//end updateWrapper
 
     /* *****************************************************************
@@ -93,6 +89,7 @@ public class IndexerAdapter extends ArrayAdapter<String> implements SectionIndex
         @Override
         protected FilterResults performFiltering( CharSequence constraintSequence ) {
 
+            DataWrapper dataWrapper = dataWrapperReference.get();
             if( dataWrapper == null ) return null;
 
 

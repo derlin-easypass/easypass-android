@@ -21,6 +21,8 @@ import com.dropbox.sync.android.*;
 
 import java.util.List;
 
+import static linder.easypass.EasyPassApplication.*;
+
 public class NoteListFragment extends ListFragment implements LoaderCallbacks<List<DbxFileInfo>> {
 
     @SuppressWarnings( "unused" )
@@ -49,6 +51,7 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
         public void onItemSelected( DbxPath path ) {
         }
     };
+
 
     @Override
     public void onStart() {
@@ -129,7 +132,7 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
         if( itemId == MENU_RENAME ) {
             final EditText filenameInput = new EditText( getActivity() );
 
-            filenameInput.setText( Util.stripExtension( "txt", fileInfo.path.getName() ) );
+            filenameInput.setText( Util.stripExtension( EP_EXTENSION, fileInfo.path.getName() ) );
             filenameInput.setSelectAllOnFocus( true );
 
             new AlertDialog.Builder( getActivity() ).setTitle( R.string.rename_note_dialog_title
@@ -141,8 +144,8 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
                     if( TextUtils.isEmpty( filename ) ) {
                         filename = filenameInput.getHint().toString();
                     }
-                    if( !filename.endsWith( ".txt" ) ) {
-                        filename += ".txt";
+                    if( !filename.endsWith( EP_EXTENSION ) ) {
+                        filename += "." + EP_EXTENSION;
                     }
 
                     DbxPath p;
@@ -171,13 +174,34 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
                     // Do nothing.
                 }
             } ).show();
+
+
         } else if( itemId == MENU_DELETE ) {
-            try {
-                DbxFileSystem.forAccount( mAccountManager.getLinkedAccount() ).delete( fileInfo
-                        .path );
-            } catch( DbxException e ) {
-                e.printStackTrace();
-            }
+            AlertDialog.Builder builder = new AlertDialog.Builder( getActivity() );
+
+            builder.setMessage( "Are you sure ?" );
+            builder.setCancelable( false );
+            builder.setTitle( "Confirm delete" );
+
+            builder.setPositiveButton( "YES", new DialogInterface.OnClickListener() {
+                public void onClick( DialogInterface dialog, int id ) {
+                    try {
+                        DbxFileSystem.forAccount( mAccountManager.getLinkedAccount() ).delete(
+                                fileInfo.path );
+                    } catch( DbxException e ) {
+                        e.printStackTrace();
+                    }
+                }
+            } );
+
+            builder.setNegativeButton( "NO", new DialogInterface.OnClickListener() {
+                public void onClick( DialogInterface dialog, int id ) {
+                    dialog.cancel();
+                }
+            } );
+
+            builder.create().show();
+
         }
         return true;
     }

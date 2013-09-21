@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="account_context_menu">
+        <item>copy password</item>
+        <item>show details</item>
+        <item>edit account</item>
+        <item>delete</item>
+    </string-array>
+</resources>

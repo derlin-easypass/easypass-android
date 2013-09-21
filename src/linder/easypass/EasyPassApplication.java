@@ -16,7 +16,7 @@ import android.widget.Toast;
 public class EasyPassApplication extends Application {
 
     public static String TAG = "EasyPass";
-    public static final String EP_EXTENSION = ".data_ser";
+    public static final String EP_EXTENSION = "data_ser";
     public static String CRYPTO_ALGORITHM = "aes-128-cbc";
 
     public static final String KEY_CACHED_PASSWD_PREFIX = "cached_passwd_";
