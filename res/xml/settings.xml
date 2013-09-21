@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory android:title="Sessions">
+
+        <EditTextPreference
+            android:key="@string/pref_key_sessions_path"
+            android:title="Session path"
+            android:defaultValue=""
+            android:summary="" />
+
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="@string/pref_key_password_caching"
+            android:title="Password Caching"
+            android:summary="Allow the application to cache the sessions passwords (unsecure)" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

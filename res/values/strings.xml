@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Easypass Sync</string>
+
+
+
+    <!--merde exemple dropbox-->
+    <string name="old_version">old version</string>
+    <string name="link_to_dropbox">link to dropbox</string>
+    <string name="no_notes">no notes</string>
+    <string name="status_folder">status folder</string>
+    <string name="error_failed_load">error : failed load</string>
+    <string name="rename_note_dialog_title">rename note</string>
+    <string name="rename_note_confirm">confirm rename</string>
+    <string name="error_invalid_filename">invalid filename</string>
+    <string name="cancel">cancel</string>
+    <string name="error_file_already_exists">file already exists</string>
+    <string name="new_note_option">new note optiom</string>
+    <string name="new_note_name_hint">name</string>
+    <string name="new_note_dialog_title">new note</string>
+    <string name="new_note_confirm">confirm new note</string>
+    <string name="unlink_from_dropbox">unlink</string>
+    <string name="menu_rename">rename</string>
+    <string name="menu_delete">delete</string>
+    <string name="pref_key_sessions_path">session path</string>
+    <string name="pref_key_password_caching">password caching</string>
+    <string name="settings">settings</string>
+</resources>
