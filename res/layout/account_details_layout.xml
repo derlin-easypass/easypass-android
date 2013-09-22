@@ -1,103 +1,130 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent">
 
-    <!--info header-->
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        style="@style/header"
-        android:text="Infos" />
-
-    <View style="@style/Divider" />
-
-    <GridLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="5dp"
-        android:columnCount="2">
-
-        <!--pseudo-->
-        <TextView
-            style="@style/details_label"
-            android:text="Pseudo" />
-
-        <TextView
-            android:id="@+id/details_pseudo"
-            style="@style/details_value"
-            android:inputType="text|textEmailAddress"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textIsSelectable="true"
-            android:text="sdlfkjsj" />
-
-        <!--email-->
-        <TextView
-            style="@style/details_label"
-            android:text="Email" />
-
-        <TextView
-            android:id="@+id/details_email"
-            style="@style/details_value"
-            android:layout_height="wrap_content"
-            android:layout_width="match_parent"
-            android:textIsSelectable="true"
-            android:inputType="text|textEmailAddress"
-            android:text="sdlfkjsj" />
-
-        <!--password-->
-        <TextView
-            style="@style/details_label"
-            android:text="Password" />
-
-        <TextView
-            style="@style/details_font"
-            android:id="@+id/details_password"
-            android:layout_width="wrap_content"
-            android:layout_height="fill_parent"
-            android:textIsSelectable="true"
-            android:inputType="text|textVisiblePassword" />
-
-        <!--show password-->
-        <CheckBox
-            style="@style/details_font"
-            android:id="@+id/details_show_password"
-            android:layout_width="wrap_content"
-            android:layout_height="fill_parent"
-            android:layout_columnSpan="2"
-            android:layout_gravity="center"
-            android:text="show password"
-
-            />
-
-    </GridLayout>
-
-    <!--notes header-->
-    <TextView
-        style="@style/header"
-        android:text="Notes" />
-    <!--style="?android:attr/listSeparatorTextViewStyle"-->
-    <View style="@style/Divider" />
-
-    <!--notes field-->
+    <!--buttons at the bottom of the screen-->
     <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:id="@+id/buttons_container"
+        android:orientation="horizontal"
+        android:layout_alignParentBottom="true"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:paddingLeft="5dp">
 
-        <TextView
-            android:id="@+id/details_notes"
-            android:layout_width="match_parent"
+        <Button
+            android:id="@+id/details_edit_button"
             android:layout_height="wrap_content"
-            style="@style/details_font"
-            android:layout_marginTop="6dp"
-            android:textIsSelectable="true"
-            android:padding="5dp"
-            android:minHeight="70dp"
-            android:cursorVisible="false" />
+            android:layout_weight="0.5"
+            android:layout_width="0dp"
+            android:text="@string/edit" />
+
+        <Button
+            android:id="@+id/details_back_button"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.5"
+            android:layout_width="0dp"
+            android:text="@string/back" />
 
     </LinearLayout>
-</LinearLayout>
+
+    <!--scrollview : container for main content-->
+    <ScrollView
+        android:layout_above="@id/buttons_container"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent">
+
+        <!--gridlayout with two columns-->
+        <GridLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginRight="4dp"
+            android:columnCount="2"
+            android:useDefaultMargins="false">
+
+            <!--infos header-->
+            <TextView
+                android:layout_columnSpan="2"
+                style="@style/header"
+                android:text="Infos" />
+
+            <View
+                style="@style/Divider"
+                android:layout_columnSpan="2"
+                android:layout_marginBottom="10dp" />
+
+            <!--name-->
+            <TextView
+                style="@style/details_label"
+                android:text="Name" />
+
+            <TextView
+                android:id="@+id/details_name"
+                style="@style/details_value"
+                android:text="23 oct. 2011 - I have a textview set to wrap text. The text is wrapping, but it is ... I think you're looking for the Ellipsize property of TextView." />
+
+            <!--pseudo-->
+            <TextView
+                style="@style/details_label"
+                android:text="Pseudo" />
+
+            <TextView
+                android:id="@+id/details_pseudo"
+                style="@style/details_value"
+                android:text="sdlfkjsj" />
+
+            <!--email-->
+            <TextView
+                style="@style/details_label"
+                android:text="Email" />
+
+            <TextView
+                android:id="@+id/details_email"
+                style="@style/details_value"
+                android:text="sdlfkjsj" />
+
+            <!--password-->
+            <TextView
+                style="@style/details_label"
+                android:text="Password" />
+
+            <TextView
+                style="@style/details_value"
+                android:id="@+id/details_password" />
+
+            <!--show password-->
+            <CheckBox
+                style="@style/details_font"
+                android:id="@+id/details_show_password"
+                android:layout_columnSpan="2"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:text="show password"
+
+                />
+
+            <!--notes header-->
+            <TextView
+                style="@style/header"
+                android:layout_columnSpan="2"
+                android:text="Notes" />
+
+            <View
+                style="@style/Divider"
+                android:layout_marginBottom="10dp"
+                android:layout_columnSpan="2" />
+
+
+            <!--notes field-->
+            <TextView
+                android:layout_columnSpan="2"
+                android:id="@+id/details_notes"
+                style="@style/details_font"
+                android:padding="5dp" />
+
+        </GridLayout>
+    </ScrollView>
+</RelativeLayout>

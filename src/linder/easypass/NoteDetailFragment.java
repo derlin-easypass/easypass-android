@@ -26,38 +26,46 @@ import java.util.List;
 import java.util.concurrent.Semaphore;
 
 import static linder.easypass.EasyPassApplication.TAG;
+import static linder.easypass.EasyPassApplication.showToast;
 
 public class NoteDetailFragment extends Fragment {
 
     // keys to the bundle's extras
-    private static final String ARG_PATH = "path";
-    private static final String ARG_PASS = "password";
+    private static final String BUNDLE_ARG_FILE_PATH = "path";
+    private static final String BUNDLE_ARG_PASSWD = "password";
 
     // algo for the deserialisation of data
     private static final String CRYPTO_ALGORITHM = "aes-128-cbc";
     // request codes for startActivityForResult calls
     private static final int EDIT_REQUEST_CODE = 9;
+    private static final int SHOW_REQUEST_CODE = 8;
 
     // context menu items
-    private static final int MENU_COPY_PASS = 0, MENU_SHOW_DETAILS = 1, MENU_EDIT = 2,
-            MENU_DELETE = 3;
+    private static final int MENU_COPY_PASS = 0;
+    private static final int MENU_COPY_PSEUDO = 1;
+    private static final int MENU_SHOW_DETAILS = 2;
+    private static final int MENU_EDIT = 3;
+    private static final int MENU_DELETE = 4;
 
 
-    private TextView mErrorMessage;
-    private View mOldVersionWarningView;
-    private View mLoadingSpinner;
+    private TextView errorMessageView;
+    private View oldVersionWarningView;
+    private View loadingSpinnerView;
 
-    private final DbxLoadHandler mHandler = new DbxLoadHandler( this );
+    private final DbxLoadHandler handler = new DbxLoadHandler( this );
 
-    private DbxFile mFile;
-    private final Object mFileLock = new Object();
+    private DbxFile sessionFile;
+    private final Object sessionFileLock = new Object();
+    // binary semaphore has the property (unlike many Lock implementations),
+    // that the "lock" can be released by a thread other than the owner
     private final Semaphore mFileUseSemaphore = new Semaphore( 1 );
-    private boolean mUserHasModifiedText = false;
+    private boolean userHasModifiedData = false;
     private boolean mHasLoadedAnyData = false;
 
 
+    private EditText inputSearch;
     private IndexableListView mList;
-    private IndexerAdapter mAdapter;
+    private IndexerAdapter adapter;
     private DataWrapper dataWrapper;
     private String mCurrentSessionName, mCurrentPassword;
 
@@ -67,14 +75,14 @@ public class NoteDetailFragment extends Fragment {
         @Override
         public void onFileChange( DbxFile file ) {
             // In case a notification is delivered late, make sure we're still
-            // on-screen (mFile != null) and still working on the same file.
-            synchronized( mFileLock ) {
-                if( file != mFile ) {
+            // on-screen (sessionFile != null) and still working on the same file.
+            synchronized( sessionFileLock ) {
+                if( file != sessionFile ) {
                     return;
                 }
             }
 
-            if( mUserHasModifiedText ) {
+            if( userHasModifiedData ) {
                 // User has modified the text locally, so we no longer care
                 // about external changes.
                 return;
@@ -93,15 +101,14 @@ public class NoteDetailFragment extends Fragment {
                 return;
             }
 
-            mHandler.sendIsShowingLatestMessage( currentIsLatest );
+            handler.sendIsShowingLatestMessage( currentIsLatest );
 
             // kick off an update if necessary
             if( newerIsCached || !mHasLoadedAnyData ) {
-                mHandler.sendDoUpdateMessage();
+                handler.sendDoUpdateMessage();
             }
         }
     };
-    private EditText inputSearch;
 
 
     /* *****************************************************************
@@ -116,8 +123,8 @@ public class NoteDetailFragment extends Fragment {
     public static NoteDetailFragment getInstance( DbxPath path, String password ) {
         NoteDetailFragment fragment = new NoteDetailFragment();
         Bundle args = new Bundle();
-        args.putString( ARG_PATH, path.toString() );
-        args.putString( ARG_PASS, password );
+        args.putString( BUNDLE_ARG_FILE_PATH, path.toString() );
+        args.putString( BUNDLE_ARG_PASSWD, password );
         fragment.setArguments( args );
         return fragment;
     }
@@ -135,10 +142,10 @@ public class NoteDetailFragment extends Fragment {
         mList = ( IndexableListView ) view.findViewById( com.woozzu.android.indexablelistview.R
                 .id.listview );
         dataWrapper = new DataWrapper( null, mCurrentSessionName, mCurrentPassword );
-        mAdapter = new IndexerAdapter( getActivity(), android.R.layout.simple_list_item_1,
+        adapter = new IndexerAdapter( getActivity(), android.R.layout.simple_list_item_1,
                 new ArrayList<String>() );
-        mAdapter.setDataWrapperReference( dataWrapper );
-        mList.setAdapter( mAdapter );
+        adapter.setDataWrapperReference( dataWrapper );
+        mList.setAdapter( adapter );
         mList.setFastScrollEnabled( true );
         registerForContextMenu( mList );
 
@@ -149,13 +156,13 @@ public class NoteDetailFragment extends Fragment {
 
             @Override
             public void onTextChanged( EditText view, String text ) {
-                mAdapter.getFilter().filter( text );
+                adapter.getFilter().filter( text );
             }
         } ) );
 
-        mOldVersionWarningView = view.findViewById( R.id.old_version );
-        mLoadingSpinner = view.findViewById( R.id.note_loading );
-        mErrorMessage = ( TextView ) view.findViewById( R.id.error_message );
+        oldVersionWarningView = view.findViewById( R.id.old_version );
+        loadingSpinnerView = view.findViewById( R.id.note_loading );
+        errorMessageView = ( TextView ) view.findViewById( R.id.error_message );
 
         return view;
     }
@@ -177,14 +184,21 @@ public class NoteDetailFragment extends Fragment {
 
                 if( !originalAccount.getNameOrDefault().equals( editedAccount.getNameOrDefault()
                 ) ) {
-                    int position = mAdapter.getPosition( oldName );
-                    mAdapter.remove( oldName );
-                    mAdapter.insert( editedAccount.getNameOrDefault(), position );
-                    mAdapter.notifyDataSetChanged();
+                    int position = adapter.getPosition( oldName );
+                    adapter.remove( oldName );
+                    adapter.insert( editedAccount.getNameOrDefault(), position );
+                    adapter.notifyDataSetChanged();
                 }
-                mUserHasModifiedText = true;
+                userHasModifiedData = true;
             }
-
+        } else if( requestCode == SHOW_REQUEST_CODE ) {
+            if( resultCode == Activity.RESULT_FIRST_USER ) { // the edit button was pressed
+                Bundle extras = data.getExtras();
+                Intent editIntent = new Intent( getActivity(), EditAccountActivity.class );
+                editIntent.putExtra( Intent.EXTRA_TEXT, extras.getString( EditAccountActivity
+                        .EXTRA_ACCOUNT_KEY ) );
+                startActivityForResult( editIntent, EDIT_REQUEST_CODE );
+            }
         } else {
             super.onActivityResult( requestCode, resultCode, data );
         }
@@ -195,26 +209,25 @@ public class NoteDetailFragment extends Fragment {
     public void onResume() {
         super.onResume();
 
-        //        mUserHasModifiedText = false;
+        //        userHasModifiedData = false;
         mHasLoadedAnyData = false;
 
-        DbxPath path = new DbxPath( getArguments().getString( ARG_PATH ) );
-        mCurrentPassword = getArguments().getString( ARG_PASS );
+        DbxPath path = new DbxPath( getArguments().getString( BUNDLE_ARG_FILE_PATH ) );
+        mCurrentPassword = getArguments().getString( BUNDLE_ARG_PASSWD );
 
-        // Grab the note name from the path:
+        // Grab the session name from the path:
         String sessionName = Util.stripExtension( "data_ser", path.getName() );
-
-        getActivity().setTitle( sessionName );
         mCurrentSessionName = sessionName;
+        getActivity().setTitle( sessionName );
 
-        DbxAccount acct = NotesAppConfig.getAccountManager( getActivity() ).getLinkedAccount();
-        if( null == acct ) {
+        DbxAccount dbAccount = NotesAppConfig.getAccountManager( getActivity() ).getLinkedAccount();
+        if( dbAccount == null ) {
             Log.e( TAG, "No linked account." );
             return;
         }
 
-        mErrorMessage.setVisibility( View.GONE );
-        mLoadingSpinner.setVisibility( View.VISIBLE );
+        errorMessageView.setVisibility( View.GONE );
+        loadingSpinnerView.setVisibility( View.VISIBLE );
 
         try {
             mFileUseSemaphore.acquire();
@@ -223,30 +236,31 @@ public class NoteDetailFragment extends Fragment {
         }
 
         try {
-            DbxFileSystem fs = DbxFileSystem.forAccount( acct );
+            DbxFileSystem fs = DbxFileSystem.forAccount( dbAccount );
             try {
-                mFile = fs.open( path );
+                sessionFile = fs.open( path );
             } catch( DbxException.NotFound e ) {
-                mFile = fs.create( path );
+                //todo
+                sessionFile = fs.create( path );
             }
         } catch( DbxException e ) {
             Log.e( TAG, "failed to open or create file.", e );
             return;
         }
 
-        mFile.addListener( mChangeListener );
+        sessionFile.addListener( mChangeListener );
 
         boolean latest;
         try {
-            latest = mFile.getSyncStatus().isLatest;
+            latest = sessionFile.getSyncStatus().isLatest;
         } catch( DbxException e ) {
             Log.w( TAG, "Failed to get sync status", e );
             return;
         }
 
 
-        mHandler.sendIsShowingLatestMessage( latest );
-        mHandler.sendDoUpdateMessage();
+        handler.sendIsShowingLatestMessage( latest );
+        handler.sendDoUpdateMessage();
     }
 
 
@@ -254,40 +268,17 @@ public class NoteDetailFragment extends Fragment {
     public void onPause() {
         super.onPause();
 
-        synchronized( mFileLock ) {
-            mFile.removeListener( mChangeListener );
+        synchronized( sessionFileLock ) {
+            sessionFile.removeListener( mChangeListener );
 
             // If the contents have changed, write them back to Dropbox
-            if( mUserHasModifiedText && mFile != null ) {
-                mUserHasModifiedText = false;
-
-                // Start a thread to do the write.
-                new Thread( new Runnable() {
-                    @Override
-                    public void run() {
-                        Log.d( TAG, "starting write" );
-                        synchronized( mFileLock ) {
-                            try {
-
-                                new JsonManager().serialize( dataWrapper.getArrayOfObjects(),
-                                        CRYPTO_ALGORITHM, mFile.getWriteStream(),
-                                        mCurrentPassword );
-
-                            } catch( Exception e ) {
-
-                                Log.e( TAG, "failed to write to file", e );
-                            }
-                            mFile.close();
-                            Log.d( TAG, "write done" );
-                            mFile = null;
-                        }
-                        mFileUseSemaphore.release();
-                    }
-                } ).start();
-
+            if( userHasModifiedData && sessionFile != null ) {
+                userHasModifiedData = false;
+                // true : asks the thread to close the file after write
+                startWriteLocalChangesThread( true );
             } else {
-                mFile.close();
-                mFile = null;
+                sessionFile.close();
+                sessionFile = null;
                 mFileUseSemaphore.release();
             }
         }
@@ -304,8 +295,9 @@ public class NoteDetailFragment extends Fragment {
         if( v.getId() == R.id.listview ) {
             AdapterView.AdapterContextMenuInfo info = ( AdapterView.AdapterContextMenuInfo )
                     menuInfo;
-            menu.setHeaderTitle( mAdapter.getItem( info.position ) );
+            menu.setHeaderTitle( adapter.getItem( info.position ) );
             menu.add( Menu.NONE, MENU_COPY_PASS, Menu.NONE, R.string.menu_copy_pass );
+            menu.add( Menu.NONE, MENU_COPY_PSEUDO, Menu.NONE, R.string.menu_copy_pseudo );
             menu.add( Menu.NONE, MENU_SHOW_DETAILS, Menu.NONE, R.string.menu_show_details );
             menu.add( Menu.NONE, MENU_EDIT, Menu.NONE, R.string.edit );
             menu.add( Menu.NONE, MENU_DELETE, Menu.NONE, R.string.menu_delete );
@@ -323,17 +315,42 @@ public class NoteDetailFragment extends Fragment {
         switch( menuItemIndex ) {
 
             case MENU_COPY_PASS:
+                String pass = dataWrapper.getAccount( accountName ).getPassword();
+                String msg;
+                if( pass != null && !pass.isEmpty() ) {
+                    Util.copyToClipBoard( getActivity(), accountName + ":pass", pass );
+                    msg = "Password copied to clipboard";
+                } else {
+                    msg = "Password is empty !";
+                }
+                showToast( msg );
+                break;
+
+            case MENU_COPY_PSEUDO:
+                String pseudo = dataWrapper.getAccount( accountName ).getPseudo();
+                if( pseudo != null && !pseudo.isEmpty() ) {
+                    Util.copyToClipBoard( getActivity(), accountName + ":pseudo", pseudo );
+                    msg = "Pseudo copied to clipboard";
+                } else {
+                    msg = "Pseudo is empty !";
+                }
+                showToast( msg );
                 break;
 
             case MENU_SHOW_DETAILS:
+                if( accountName == null ) break;
+                Intent showIntent = new Intent( getActivity(), ShowAccountActivity.class );
+                showIntent.putExtra( Intent.EXTRA_TEXT, new Gson().toJson( dataWrapper.getAccount
+                        ( accountName ) ) );
+                startActivityForResult( showIntent, SHOW_REQUEST_CODE );
                 break;
 
             case MENU_EDIT:
                 if( accountName == null ) break;
-                Intent intent = new Intent( getActivity(), EditAccountActivity.class );
-                intent.putExtra( Intent.EXTRA_TEXT, new Gson().toJson( dataWrapper.getAccount(
-                        accountName ) ) );
-                startActivityForResult( intent, EDIT_REQUEST_CODE );
+                Intent editIntent = new Intent( getActivity(), EditAccountActivity.class );
+                editIntent.putExtra( Intent.EXTRA_TEXT, new Gson().toJson( dataWrapper.getAccount
+                        ( accountName ) ) );
+                startActivityForResult( editIntent, EDIT_REQUEST_CODE );
                 break;
 
             case MENU_DELETE:
@@ -344,9 +361,9 @@ public class NoteDetailFragment extends Fragment {
                 builder.setPositiveButton( "YES", new DialogInterface.OnClickListener() {
                     public void onClick( DialogInterface dialog, int id ) {
                         dataWrapper.removeAccount( accountName );
-                        mAdapter.remove( accountName );
-                        mAdapter.notifyDataSetChanged();
-                        mUserHasModifiedText = true;
+                        adapter.remove( accountName );
+                        adapter.notifyDataSetChanged();
+                        userHasModifiedData = true;
                     }
                 } );
 
@@ -370,53 +387,60 @@ public class NoteDetailFragment extends Fragment {
         new Thread( new Runnable() {
             @Override
             public void run() {
-                synchronized( mFileLock ) {
-                    if( null == mFile || mUserHasModifiedText ) {
+                synchronized( sessionFileLock ) {
+                    // do nothing is the file is null or if the data where modified locally
+                    if( sessionFile == null || userHasModifiedData ) {
                         return;
                     }
                     boolean updated;
                     try {
-                        updated = mFile.update();
+                        updated = sessionFile.update();
                     } catch( DbxException e ) {
                         Log.e( TAG, "failed to update file", e );
-                        mHandler.sendLoadFailedMessage( e.toString() );
+                        handler.sendLoadFailedMessage( e.toString() );
                         return;
                     }
 
-                    if( !mHasLoadedAnyData || updated ) {
-                        Log.d( TAG, "starting read" );
-                        ArrayList<Object[]> contents;
-                        try {
-                            contents = ( ArrayList<Object[]> ) new JsonManager().deserialize(
-                                    CRYPTO_ALGORITHM, mFile.getReadStream(), mCurrentPassword,
-                                    new TypeToken<ArrayList<Object[]>>() {
-                            }.getType() );
+                    // if some data where already loaded and there is no change,
+                    // doesn't bother to reread the file and returns
+                    if( mHasLoadedAnyData && !updated ) {
+                        handler.sendUpdateDoneWithoutChangesMessage();
+                        return;
+                    }
 
-                        } catch( IOException e ) {
-                            Log.e( TAG, "failed to read file", e );
-                            if( !mHasLoadedAnyData ) {
-                                mHandler.sendLoadFailedMessage( getString( R.string
-                                        .error_failed_load ) );
-                            }
-                            return;
-                        } catch( JsonManager.WrongCredentialsException e ) {
-                            mHandler.sendLoadFailedMessage( "wrong credentials" );
-                            e.printStackTrace();
-                            return;
-                        } catch( Exception e ) {
-                            mHandler.sendLoadFailedMessage( "Sorry, but an unknown error occured" );
-                            e.printStackTrace();
-                            return;
-                        }
-                        Log.d( TAG, "read done" );
+                    // from here, either to data are loaded for the first time,
+                    // or there was an external change in the sessionFile
+                    try {
+                        Log.d( TAG, "starting read" );
+                        ArrayList<Object[]> contents = ( ArrayList<Object[]> ) new JsonManager()
+                                .deserialize( CRYPTO_ALGORITHM, sessionFile.getReadStream(),
+                                        mCurrentPassword, new TypeToken<ArrayList<Object[]>>() {
+                        }.getType() );
 
                         if( contents != null ) {
                             mHasLoadedAnyData = true;
                         }
+                        Log.d( TAG, "read done" );
 
-                        mHandler.sendUpdateDoneWithChangesMessage( contents );
-                    } else {
-                        mHandler.sendUpdateDoneWithoutChangesMessage();
+                        // asks the handler to update the view
+                        handler.sendUpdateDoneWithChangesMessage( contents );
+
+                    } catch( IOException e ) {
+                        Log.e( TAG, "failed to read file", e );
+                        if( !mHasLoadedAnyData ) {
+                            handler.sendLoadFailedMessage( getString( R.string.error_failed_load
+                            ) );
+                        }
+
+                    } catch( JsonManager.WrongCredentialsException e ) {
+                        //TODO
+                        handler.sendLoadFailedMessage( "Wrong credentials" );
+                        e.printStackTrace();
+
+                    } catch( Exception e ) {
+                        handler.sendLoadFailedMessage( "Sorry, but an unknown error occured" );
+                        e.printStackTrace();
+
                     }
                 }
             }
@@ -424,17 +448,49 @@ public class NoteDetailFragment extends Fragment {
     }
 
 
+    private void startWriteLocalChangesThread( final boolean closeFileAfterWrite ) {
+
+        // Start a thread to do the write.
+        new Thread( new Runnable() {
+            @Override
+            public void run() {
+                Log.d( TAG, "starting write" );
+                synchronized( sessionFileLock ) {
+                    try {
+                        new JsonManager().serialize( dataWrapper.getArrayOfObjects(),
+                                CRYPTO_ALGORITHM, sessionFile.getWriteStream(), mCurrentPassword );
+                        Log.d( TAG, "write done" );
+                    } catch( Exception e ) {
+                        Log.e( TAG, "failed to write to file", e );
+                    }
+                    // if asked, closes the file
+                    if( closeFileAfterWrite ) {
+                        sessionFile.close();
+                        sessionFile = null;
+                        mFileUseSemaphore.release();
+                    }
+                }
+            }
+        } ).start();
+
+    }// end startWriteLocalChanges
+
+
     private void applyNewData( List<Object[]> data ) {
-        if( mUserHasModifiedText || data == null ) {
+        // if the data where modified, do nothing
+        //TODO
+        if( userHasModifiedData || data == null ) {
             return;
         }
+        // updates the wrapper and the list adapter
         dataWrapper.setData( data );
-        mAdapter.clear();
-        mAdapter.addAll( dataWrapper.getAccountNames() );
-        mAdapter.notifyDataSetChanged();
-        mAdapter.getFilter().filter( inputSearch.getText() );
+        adapter.clear();
+        adapter.addAll( dataWrapper.getAccountNames() );
+        adapter.notifyDataSetChanged();
+        // applies the filter again
+        adapter.getFilter().filter( inputSearch.getText() );
         // explicitly reset mChanged to false since the setText above changed it to true
-        mUserHasModifiedText = false;
+        userHasModifiedData = false;
     }
 
 
@@ -444,71 +500,75 @@ public class NoteDetailFragment extends Fragment {
 
     private static class DbxLoadHandler extends Handler {
 
-        private final WeakReference<NoteDetailFragment> mFragment;
+        private final WeakReference<NoteDetailFragment> fragment;
 
         public static final int MESSAGE_IS_SHOWING_LATEST = 0;
         public static final int MESSAGE_DO_UPDATE = 1;
         public static final int MESSAGE_UPDATE_DONE = 2;
         public static final int MESSAGE_LOAD_FAILED = 3;
 
+        private static final int TRUE = 1, FALSE = 0, UNDEF = -1;
+
 
         public DbxLoadHandler( NoteDetailFragment containingFragment ) {
-            mFragment = new WeakReference<NoteDetailFragment>( containingFragment );
+            fragment = new WeakReference<NoteDetailFragment>( containingFragment );
         }
 
 
         @Override
         public void handleMessage( Message msg ) {
-            NoteDetailFragment frag = mFragment.get();
+            NoteDetailFragment frag = fragment.get();
             if( frag == null ) {
                 return;
             }
 
-            if( msg.what == MESSAGE_IS_SHOWING_LATEST ) {
-                boolean latest = msg.arg1 != 0;
-                frag.mOldVersionWarningView.setVisibility( latest ? View.GONE : View.VISIBLE );
-            } else if( msg.what == MESSAGE_DO_UPDATE ) {
-                if( frag.mUserHasModifiedText ) {
-                    // user has made changes to the file, so ignore this request
+            switch( msg.what ) {
+
+                case MESSAGE_IS_SHOWING_LATEST:
+                    // arg1 : true if the file is the latest version
+                    frag.oldVersionWarningView.setVisibility( msg.arg1 == TRUE ? View.GONE : View
+                            .VISIBLE );
                     return;
-                }
 
-                // disable UI before doing an update - if user were to make
-                // changes between now and when the update completes, they would
-                // erroneously be applied on top of that newer version, so
-                // prevent that by just temporarily disabling the UI (should be
-                // quick anyway).
-                //frag.mText.setEnabled( false );
+                case MESSAGE_DO_UPDATE:
+                    // updates only if the user didn't modify the data
+                    if( !frag.userHasModifiedData ) {
+                        frag.startUpdateOnBackgroundThread();
+                    }
+                    return;
 
-                frag.startUpdateOnBackgroundThread();
-            } else if( msg.what == MESSAGE_UPDATE_DONE ) {
-                if( frag.mUserHasModifiedText ) {
-                    Log.e( TAG, "Somehow user changed text while an update was in progress!" );
-                }
+                case MESSAGE_UPDATE_DONE:
+                    if( frag.userHasModifiedData ) {
+                        Log.e( TAG, "Somehow user changed text while an update was in progress!" );
+                    }
 
-                frag.mLoadingSpinner.setVisibility( View.GONE );
-                frag.mErrorMessage.setVisibility( View.GONE );
+                    // be sure to hide the spinner
+                    frag.loadingSpinnerView.setVisibility( View.GONE );
+                    frag.errorMessageView.setVisibility( View.GONE );
 
-                boolean gotNewData = msg.arg1 != 0;
-                if( gotNewData ) {
-                    List<Object[]> contents = ( List<Object[]> ) msg.obj;
-                    frag.applyNewData( contents );
-                }
+                    // arg1 set to true only if there was a change, i.e. new data was loaded
+                    if( msg.arg1 == TRUE ) {
+                        List<Object[]> contents = ( List<Object[]> ) msg.obj;
+                        frag.applyNewData( contents );
+                    }
+                    return;
 
-            } else if( msg.what == MESSAGE_LOAD_FAILED ) {
-                String errorText = ( String ) msg.obj;
-                frag.mLoadingSpinner.setVisibility( View.GONE );
-                frag.mErrorMessage.setText( errorText );
-                frag.mErrorMessage.setVisibility( View.VISIBLE );
-            } else {
-                throw new RuntimeException( "Unknown message" );
+                case MESSAGE_LOAD_FAILED:
+                    frag.loadingSpinnerView.setVisibility( View.GONE );
+                    // the object is the message to show
+                    frag.errorMessageView.setText( ( String ) msg.obj );
+                    frag.errorMessageView.setVisibility( View.VISIBLE );
+                    return;
+
+                default:
+                    throw new RuntimeException( "Unknown message" );
             }
         }
 
 
         public void sendIsShowingLatestMessage( boolean isLatestVersion ) {
             sendMessage( Message.obtain( this, MESSAGE_IS_SHOWING_LATEST,
-                    isLatestVersion ? 1 : 0, -1 ) );
+                    isLatestVersion ? TRUE : FALSE, UNDEF ) );
         }
 
 
@@ -518,12 +578,12 @@ public class NoteDetailFragment extends Fragment {
 
 
         public void sendUpdateDoneWithChangesMessage( List<Object[]> newContents ) {
-            sendMessage( Message.obtain( this, MESSAGE_UPDATE_DONE, 1, -1, newContents ) );
+            sendMessage( Message.obtain( this, MESSAGE_UPDATE_DONE, TRUE, UNDEF, newContents ) );
         }
 
 
         public void sendUpdateDoneWithoutChangesMessage() {
-            sendMessage( Message.obtain( this, MESSAGE_UPDATE_DONE, 0, -1 ) );
+            sendMessage( Message.obtain( this, MESSAGE_UPDATE_DONE, FALSE, UNDEF ) );
         }
 
 

@@ -15,40 +15,39 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:layout_marginBottom="8dp"
-            >
+            android:layout_marginBottom="8dp">
 
-        <linder.easypass.what.ClearableEditText
-            android:id="@+id/inputSearch"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/search"
-            android:selectAllOnFocus="true"
-            android:inputType="text" />
+            <linder.easypass.what.ClearableEditText
+                android:id="@+id/inputSearch"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/search"
+                android:selectAllOnFocus="true"
+                android:inputType="text" />
 
-        <com.woozzu.android.widget.IndexableListView
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/listview" />
+            <com.woozzu.android.widget.IndexableListView
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/listview" />
 
         </LinearLayout>
 
 
         <ProgressBar
-            android:id="@+id/note_loading"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:indeterminateOnly="true" />
+        android:id="@+id/note_loading"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:indeterminateOnly="true" />
 
         <TextView
             style="?android:attr/textAppearanceLarge"
             android:id="@+id/error_message"
+            android:visibility="gone"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:visibility="gone" />
-
+            android:textColor="#980306"
+            android:layout_gravity="center" />
     </FrameLayout>
 
     <LinearLayout
@@ -67,7 +66,10 @@
             android:text="@string/old_version"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="#ffff88"
-            android:padding="10dp" />
+            android:textColor="@android:color/white"
+            android:background="@android:color/holo_blue_dark"
+            android:padding="10dp"
+            android:textStyle="bold|italic" />
+        <!--yellow : android:background="#ffff88"-->
     </LinearLayout>
 </LinearLayout>
