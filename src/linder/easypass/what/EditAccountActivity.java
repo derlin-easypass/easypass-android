@@ -49,8 +49,8 @@ public class EditAccountActivity extends Activity implements View.OnClickListene
         ( ( CheckBox ) findViewById( R.id.details_show_password ) ).
                 setOnCheckedChangeListener( this );
 
-        findViewById( R.id.details_cancel_button ).setOnClickListener( this );
-        findViewById( R.id.details_save_button ).setOnClickListener( this );
+        findViewById( R.id.edit_details_cancel_button ).setOnClickListener( this );
+        findViewById( R.id.edit_details_save_button ).setOnClickListener( this );
 
 
     }
@@ -91,11 +91,11 @@ public class EditAccountActivity extends Activity implements View.OnClickListene
     public void onClick( View v ) {
 
         switch( v.getId() ) {
-            case R.id.details_cancel_button:
+            case R.id.edit_details_cancel_button:
                 resultType = RESULT_CANCELED;
                 break;
 
-            case R.id.details_save_button:
+            case R.id.edit_details_save_button:
 
                 account.setName( editName.getText().toString() );
                 account.setPseudo( editPseudo.getText().toString() );

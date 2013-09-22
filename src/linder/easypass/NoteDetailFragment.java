@@ -27,6 +27,7 @@ import java.util.concurrent.Semaphore;
 
 import static linder.easypass.EasyPassApplication.TAG;
 import static linder.easypass.EasyPassApplication.showToast;
+import static linder.easypass.what.AccountActivity.*;
 
 public class NoteDetailFragment extends Fragment {
 
@@ -37,8 +38,7 @@ public class NoteDetailFragment extends Fragment {
     // algo for the deserialisation of data
     private static final String CRYPTO_ALGORITHM = "aes-128-cbc";
     // request codes for startActivityForResult calls
-    private static final int EDIT_REQUEST_CODE = 9;
-    private static final int SHOW_REQUEST_CODE = 8;
+    private static final int ACCOUNT_ACTIVITY_REQUEST_CODE = 23;
 
     // context menu items
     private static final int MENU_COPY_PASS = 0;
@@ -170,13 +170,22 @@ public class NoteDetailFragment extends Fragment {
 
     @Override
     public void onActivityResult( int requestCode, int resultCode, Intent data ) {
-        if( requestCode == EDIT_REQUEST_CODE ) {
+
+        if( requestCode == ACCOUNT_ACTIVITY_REQUEST_CODE ) {
             if( resultCode == Activity.RESULT_OK ) {
+
                 Bundle extras = data.getExtras();
+
+                // if the account was not modified, no need to go further
+                //                boolean isAccountModified = data.getBooleanExtra( AccountActivity
+                //                        .EXTRA_ACCOUNT_MODIFIED, false );
+                //                if( !isAccountModified ) return;
+
+                // updates the data with the possible modifications
                 Account originalAccount = dataWrapper.getAccount( extras.getString(
-                        EditAccountActivity.EXTRA_ORIGINAL_ACCOUNT_NAME ) );
-                Account editedAccount = new Gson().fromJson( extras.getString(
-                        EditAccountActivity.EXTRA_ACCOUNT_KEY ), Account.class );
+                        EXTRA_ORIGINAL_ACCOUNT_NAME_kEY ) );
+                Account editedAccount = new Gson().fromJson( extras.getString( EXTRA_ACCOUNT_KEY
+                ), Account.class );
 
                 // if return false, it means the two accounts are identical
                 if( !dataWrapper.replaceAccount( originalAccount, editedAccount ) ) return;
@@ -190,14 +199,6 @@ public class NoteDetailFragment extends Fragment {
                     adapter.notifyDataSetChanged();
                 }
                 userHasModifiedData = true;
-            }
-        } else if( requestCode == SHOW_REQUEST_CODE ) {
-            if( resultCode == Activity.RESULT_FIRST_USER ) { // the edit button was pressed
-                Bundle extras = data.getExtras();
-                Intent editIntent = new Intent( getActivity(), EditAccountActivity.class );
-                editIntent.putExtra( Intent.EXTRA_TEXT, extras.getString( EditAccountActivity
-                        .EXTRA_ACCOUNT_KEY ) );
-                startActivityForResult( editIntent, EDIT_REQUEST_CODE );
             }
         } else {
             super.onActivityResult( requestCode, resultCode, data );
@@ -338,19 +339,15 @@ public class NoteDetailFragment extends Fragment {
                 break;
 
             case MENU_SHOW_DETAILS:
-                if( accountName == null ) break;
-                Intent showIntent = new Intent( getActivity(), ShowAccountActivity.class );
-                showIntent.putExtra( Intent.EXTRA_TEXT, new Gson().toJson( dataWrapper.getAccount
-                        ( accountName ) ) );
-                startActivityForResult( showIntent, SHOW_REQUEST_CODE );
-                break;
-
             case MENU_EDIT:
-                if( accountName == null ) break;
-                Intent editIntent = new Intent( getActivity(), EditAccountActivity.class );
-                editIntent.putExtra( Intent.EXTRA_TEXT, new Gson().toJson( dataWrapper.getAccount
-                        ( accountName ) ) );
-                startActivityForResult( editIntent, EDIT_REQUEST_CODE );
+                Account account = dataWrapper.getAccount( accountName );
+                if( account == null ) break;
+                Intent showIntent = new Intent( getActivity(), AccountActivity.class );
+                showIntent.putExtra( Intent.EXTRA_TEXT, new Gson().toJson( account ) );
+                showIntent.putExtra( EXTRA_REQUEST_CODE_KEY, menuItemIndex == MENU_SHOW_DETAILS ?
+                        SHOW_REQUEST_CODE : EDIT_REQUEST_CODE );
+                startActivityForResult( showIntent, ACCOUNT_ACTIVITY_REQUEST_CODE );
+
                 break;
 
             case MENU_DELETE:

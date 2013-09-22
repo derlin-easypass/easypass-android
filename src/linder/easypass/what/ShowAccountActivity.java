@@ -44,8 +44,8 @@ public class ShowAccountActivity extends Activity implements CompoundButton
         notesView = ( TextView ) findViewById( R.id.details_notes );
         passView = ( TextView ) findViewById( R.id.details_password );
 
-        findViewById( R.id.details_edit_button ).setOnClickListener( this );
-        findViewById( R.id.details_back_button ).setOnClickListener( this );
+        findViewById( R.id.show_details_edit_button ).setOnClickListener( this );
+        findViewById( R.id.show_details_back_button ).setOnClickListener( this );
 
         if( Build.VERSION.SDK_INT >= 11 ) {
             // Moving this call into a helper class avoids crashes on DalvikVM in
@@ -121,10 +121,10 @@ public class ShowAccountActivity extends Activity implements CompoundButton
     @Override
     public void onClick( View v ) {
         switch( v.getId() ) {
-            case R.id.details_edit_button:
+            case R.id.show_details_edit_button:
                 resultType = Activity.RESULT_FIRST_USER;
                 finish();
-            case R.id.details_back_button:
+            case R.id.show_details_back_button:
                 resultType = Activity.RESULT_OK;
                 finish();
         }

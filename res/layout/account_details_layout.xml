@@ -15,18 +15,18 @@
         android:paddingLeft="5dp">
 
         <Button
-            android:id="@+id/details_edit_button"
-            android:layout_height="wrap_content"
-            android:layout_weight="0.5"
-            android:layout_width="0dp"
-            android:text="@string/edit" />
-
-        <Button
-            android:id="@+id/details_back_button"
+            android:id="@+id/show_details_back_button"
             android:layout_height="wrap_content"
             android:layout_weight="0.5"
             android:layout_width="0dp"
             android:text="@string/back" />
+
+        <Button
+            android:id="@+id/show_details_edit_button"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.5"
+            android:layout_width="0dp"
+            android:text="@string/edit" />
 
     </LinearLayout>
 
