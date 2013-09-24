@@ -1,10 +1,12 @@
-package linder.easypass.what;
+package linder.easypass.session_details;
 
 import android.content.Context;
 import android.widget.ArrayAdapter;
 import android.widget.Filter;
 import android.widget.SectionIndexer;
 import com.woozzu.android.util.StringMatcher;
+import linder.easypass.models.Account;
+import linder.easypass.models.DataWrapper;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;

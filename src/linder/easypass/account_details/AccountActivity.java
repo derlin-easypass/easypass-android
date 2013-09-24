@@ -1,4 +1,4 @@
-package linder.easypass.what;
+package linder.easypass.account_details;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
@@ -13,6 +13,7 @@ import android.view.View;
 import com.google.gson.Gson;
 import linder.easypass.EasyPassApplication;
 import linder.easypass.R;
+import linder.easypass.models.Account;
 
 /**
  * User: lucy
@@ -35,8 +36,6 @@ public class AccountActivity extends FragmentActivity implements View.OnClickLis
     private int resultType = RESULT_CANCELED;
 
 
-
-
     interface AccountDetailsFragment {
         public void setWeakReference( Account account );
 
@@ -52,7 +51,7 @@ public class AccountActivity extends FragmentActivity implements View.OnClickLis
     @Override
     protected void onCreate( Bundle savedInstanceState ) {
         super.onCreate( savedInstanceState );
-        setContentView( R.layout.activity_frame_layout );
+        setContentView( R.layout.activity_account_details );
 
         if( Build.VERSION.SDK_INT >= 11 ) {
             // Moving this call into a helper class avoids crashes on DalvikVM in
@@ -84,7 +83,7 @@ public class AccountActivity extends FragmentActivity implements View.OnClickLis
 
             if( requestCode == NEW_REQUEST_CODE ) {
                 showEditFragment();
-            }else if( requestCode == SHOW_REQUEST_CODE ) { //show
+            } else if( requestCode == SHOW_REQUEST_CODE ) { //show
                 showShowFragment();
             } else if( requestCode == EDIT_REQUEST_CODE ) {
                 editOnly = true;
@@ -102,10 +101,10 @@ public class AccountActivity extends FragmentActivity implements View.OnClickLis
         if( showFragment == null ) {
             showFragment = new ShowAccountFragment();
         }
-        getSupportFragmentManager().beginTransaction().replace( R.id.fragment_holder, ( Fragment
-                ) showFragment ).commit();
+        getSupportFragmentManager().beginTransaction().replace( R.id.fragment_holder,
+                ( Fragment ) showFragment ).commit();
 
-//        showFragment.setWeakReference( account );
+        //        showFragment.setWeakReference( account );
         showFragment.setWeakReference( account );
         showFragment.updateFields();
         isEditFragmentShowing = false;
@@ -147,12 +146,13 @@ public class AccountActivity extends FragmentActivity implements View.OnClickLis
         }
     }
 
+
     @Override
     public void finish() {
         Intent data = new Intent();
         data.putExtra( EXTRA_ACCOUNT_KEY, new Gson().toJson( account ) );
         data.putExtra( EXTRA_ORIGINAL_ACCOUNT_NAME_kEY, originalAccountName );
-//        data.putExtra( EXTRA_ACCOUNT_MODIFIED, true );
+        //        data.putExtra( EXTRA_ACCOUNT_MODIFIED, true );
         setResult( resultType, data );
         super.finish();
     }
@@ -172,13 +172,16 @@ public class AccountActivity extends FragmentActivity implements View.OnClickLis
                 resultType = RESULT_OK;
                 if( editOnly ) {
                     finish();
-                    return;
+                } else {
+                    showShowFragment();
                 }
-                showShowFragment();
                 break;
             case R.id.edit_details_cancel_button:
-                if( editOnly ) finish();
-                showShowFragment();
+                if( editOnly ) {
+                    finish();
+                } else {
+                    showShowFragment();
+                }
         }
     }
 

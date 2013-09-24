@@ -1,4 +1,4 @@
-package linder.easypass.what;
+package linder.easypass.settings;
 
 import android.app.FragmentManager;
 import android.content.SharedPreferences;

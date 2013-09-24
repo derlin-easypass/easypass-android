@@ -1,4 +1,6 @@
-package linder.easypass.what;
+package linder.easypass.models;
+
+import linder.easypass.models.Account;
 
 import java.util.ArrayList;
 import java.util.Collections;

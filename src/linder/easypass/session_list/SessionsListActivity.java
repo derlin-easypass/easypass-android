@@ -1,4 +1,4 @@
-package linder.easypass;
+package linder.easypass.session_list;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -8,11 +8,14 @@ import android.support.v4.app.FragmentActivity;
 import android.text.InputType;
 import android.widget.EditText;
 import com.dropbox.sync.android.DbxPath;
+import linder.easypass.session_details.SessionDetailActivity;
+import linder.easypass.session_details.SessionDetailFragment;
+import linder.easypass.R;
 
 import static linder.easypass.EasyPassApplication.KEY_CACHED_PASSWD_PREFIX;
 import static linder.easypass.EasyPassApplication.getPrefs;
 
-public class NoteListActivity extends FragmentActivity implements NoteListFragment.Callbacks {
+public class SessionsListActivity extends FragmentActivity implements SessionsListFragment.Callbacks {
 
     private boolean mTwoPane;
     private boolean arePassCached;
@@ -21,11 +24,11 @@ public class NoteListActivity extends FragmentActivity implements NoteListFragme
     @Override
     public void onCreate( Bundle savedInstanceState ) {
         super.onCreate( savedInstanceState );
-        setContentView( R.layout.activity_note_list );
+        setContentView( R.layout.activity_sessions_list );
 
         if( findViewById( R.id.note_detail_container ) != null ) {
             mTwoPane = true;
-            ( ( NoteListFragment ) getSupportFragmentManager().findFragmentById( R.id.note_list )
+            ( ( SessionsListFragment ) getSupportFragmentManager().findFragmentById( R.id.note_list )
             ).setActivateOnItemClick( true );
         }
     }
@@ -54,26 +57,26 @@ public class NoteListActivity extends FragmentActivity implements NoteListFragme
 
     private void showPasswordDialog( final DbxPath path ) {
         // creates and show a passwod dialog
-        final EditText input = new EditText( NoteListActivity.this );
+        final EditText input = new EditText( SessionsListActivity.this );
         input.setInputType( InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD );
 
-        new AlertDialog.Builder( NoteListActivity.this ).setTitle( "Password" ).setView( input )
+        new AlertDialog.Builder( SessionsListActivity.this ).setTitle( "Password" ).setView( input )
                 .setPositiveButton( "OK", new DialogInterface.OnClickListener() {
 
-            public void onClick( DialogInterface dialog, int whichButton ) {
-                String pass = input.getText().toString();
-                if( pass.length() > 3 ) {
+                    public void onClick( DialogInterface dialog, int whichButton ) {
+                        String pass = input.getText().toString();
+                        if( pass.length() > 3 ) {
 
-                    if( arePassCached ) { // stores the passwd
-                        getPrefs().edit().putString( KEY_CACHED_PASSWD_PREFIX + path.getName(),
-                                pass ).commit();
+                            if( arePassCached ) { // stores the passwd
+                                getPrefs().edit().putString( KEY_CACHED_PASSWD_PREFIX + path
+                                        .getName(), pass ).commit();
+                            }
+
+                            switchToDetailsActivity( path, pass );
+
+                        }
                     }
-
-                    switchToDetailsActivity( path, pass );
-
-                }
-            }
-        } ).setNegativeButton( "Cancel", new DialogInterface.OnClickListener() {
+                } ).setNegativeButton( "Cancel", new DialogInterface.OnClickListener() {
             public void onClick( DialogInterface dialog, int whichButton ) {
                 dialog.dismiss();
             }
@@ -84,14 +87,14 @@ public class NoteListActivity extends FragmentActivity implements NoteListFragme
 
     private void switchToDetailsActivity( DbxPath path, String password ) {
         if( mTwoPane ) {
-            NoteDetailFragment fragment = NoteDetailFragment.getInstance( path, password );
+            SessionDetailFragment fragment = SessionDetailFragment.getInstance( path, password );
             getSupportFragmentManager().beginTransaction().replace( R.id.note_detail_container,
                     fragment ).commit();
 
         } else {
-            Intent detailIntent = new Intent( this, NoteDetailActivity.class );
-            detailIntent.putExtra( NoteDetailActivity.EXTRA_PATH, path.toString() );
-            detailIntent.putExtra( NoteDetailActivity.EXTRA_PASS, password );
+            Intent detailIntent = new Intent( this, SessionDetailActivity.class );
+            detailIntent.putExtra( SessionDetailActivity.EXTRA_PATH, path.toString() );
+            detailIntent.putExtra( SessionDetailActivity.EXTRA_PASS, password );
             startActivity( detailIntent );
         }
     }//end switchToDetailsActivity

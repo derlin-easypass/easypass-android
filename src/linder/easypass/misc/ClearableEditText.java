@@ -1,4 +1,4 @@
-package linder.easypass.what;
+package linder.easypass.misc;
 
 /**
  * Copyright 2013 Alex Yanchenko

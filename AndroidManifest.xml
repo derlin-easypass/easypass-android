@@ -19,7 +19,7 @@
 
         <!--android:theme="@android:style/Theme.Light"-->
         <activity
-            android:name="linder.easypass.NoteListActivity"
+            android:name=".session_list.SessionsListActivity"
             android:configChanges="orientation|screenSize"
             android:label="@string/app_name" >
             <intent-filter>
@@ -28,29 +28,18 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="linder.easypass.NoteDetailActivity"
+            android:name=".session_details.SessionDetailActivity"
             android:configChanges="orientation|screenSize"
             android:windowSoftInputMode="stateHidden"
             android:label="@string/app_name" >
         </activity>
         <activity
-            android:name="linder.easypass.what.ShowAccountActivity"
-            android:configChanges="orientation|screenSize"
-            android:windowSoftInputMode="stateHidden"
-            android:label="@string/app_name" >
-        </activity>
-        <activity
-            android:name="linder.easypass.what.EditAccountActivity"
+            android:name=".account_details.AccountActivity"
             android:configChanges="orientation|screenSize"
             android:label="@string/app_name" >
         </activity>
         <activity
-            android:name="linder.easypass.what.AccountActivity"
-            android:configChanges="orientation|screenSize"
-            android:label="@string/app_name" >
-        </activity>
-        <activity
-            android:name="linder.easypass.what.SettingsActivity"
+            android:name=".settings.SettingsActivity"
             android:configChanges="orientation|screenSize"
             android:label="@string/app_name" >
         </activity>

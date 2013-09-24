@@ -1,4 +1,4 @@
-package linder.easypass;
+package linder.easypass.session_details;
 
 import android.annotation.TargetApi;
 import android.content.Intent;
@@ -8,8 +8,10 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.NavUtils;
 import android.view.MenuItem;
 import com.dropbox.sync.android.DbxPath;
+import linder.easypass.R;
+import linder.easypass.session_list.SessionsListActivity;
 
-public class NoteDetailActivity extends FragmentActivity {
+public class SessionDetailActivity extends FragmentActivity {
 
     public static final String EXTRA_PATH = "path";
     public static final String EXTRA_PASS = "pass";
@@ -19,7 +21,7 @@ public class NoteDetailActivity extends FragmentActivity {
     @Override
     protected void onCreate( Bundle savedInstanceState ) {
         super.onCreate( savedInstanceState );
-        setContentView( R.layout.activity_note_detail );
+        setContentView( R.layout.activity_session_detail );
 
         if( Build.VERSION.SDK_INT >= 11 ) {
             // Moving this call into a helper class avoids crashes on DalvikVM in
@@ -31,8 +33,8 @@ public class NoteDetailActivity extends FragmentActivity {
         if( savedInstanceState == null ) {
             String path = getIntent().getStringExtra( EXTRA_PATH );
             String pass = getIntent().getStringExtra( EXTRA_PASS );
-            NoteDetailFragment fragment = NoteDetailFragment.getInstance( new DbxPath( path ),
-                    pass );
+            SessionDetailFragment fragment = SessionDetailFragment.getInstance( new DbxPath( path
+            ), pass );
             getSupportFragmentManager().beginTransaction().add( R.id.note_detail_container,
                     fragment ).commit();
         }
@@ -42,7 +44,7 @@ public class NoteDetailActivity extends FragmentActivity {
     @Override
     public boolean onOptionsItemSelected( MenuItem item ) {
         if( item.getItemId() == android.R.id.home ) {
-            NavUtils.navigateUpTo( this, new Intent( this, NoteListActivity.class ) );
+            NavUtils.navigateUpTo( this, new Intent( this, SessionsListActivity.class ) );
             return true;
         }
 
@@ -52,7 +54,7 @@ public class NoteDetailActivity extends FragmentActivity {
 
     private static class Api11Helper {
         @TargetApi( 11 )
-        public static void setDisplayHomeAsUpEnabled( NoteDetailActivity activity, boolean value ) {
+        public static void setDisplayHomeAsUpEnabled( SessionDetailActivity activity, boolean value ) {
             activity.getActionBar().setDisplayHomeAsUpEnabled( true );
         }
     }

@@ -1,4 +1,4 @@
-package linder.easypass;
+package linder.easypass.session_list.folders_handling;
 
 import android.content.Context;
 import android.support.v4.content.AsyncTaskLoader;

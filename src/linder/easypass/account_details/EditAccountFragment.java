@@ -1,4 +1,4 @@
-package linder.easypass.what;
+package linder.easypass.account_details;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -12,10 +12,11 @@ import android.widget.CompoundButton;
 import android.widget.EditText;
 import linder.easypass.EasyPassApplication;
 import linder.easypass.R;
+import linder.easypass.models.Account;
 
 import java.lang.ref.WeakReference;
 
-import static linder.easypass.what.AccountActivity.AccountDetailsFragment;
+import static linder.easypass.account_details.AccountActivity.AccountDetailsFragment;
 
 /**
  * User: lucy
@@ -37,7 +38,7 @@ public class EditAccountFragment extends Fragment implements CompoundButton
         super.onCreate( savedInstanceState );
 
         // inflates and sets the dialog's content view
-        View view = inflater.inflate( R.layout.account_edit_details_layout, null );
+        View view = inflater.inflate( R.layout.fragment_edit_account_details, null );
 
         editName = ( EditText ) view.findViewById( R.id.details_name );
         editPseudo = ( EditText ) view.findViewById( R.id.details_pseudo );

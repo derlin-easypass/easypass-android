@@ -1,4 +1,4 @@
-package linder.easypass.what;
+package linder.easypass.account_details;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -10,10 +10,11 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.TextView;
 import linder.easypass.R;
+import linder.easypass.models.Account;
 
 import java.lang.ref.WeakReference;
 
-import static linder.easypass.what.AccountActivity.AccountDetailsFragment;
+import static linder.easypass.account_details.AccountActivity.AccountDetailsFragment;
 
 /**
  * User: lucy
@@ -33,7 +34,7 @@ public class ShowAccountFragment extends Fragment implements CompoundButton
     public View onCreateView( LayoutInflater inflater, ViewGroup container,
                               Bundle savedInstanceState ) {
 
-        View view = inflater.inflate( R.layout.account_details_layout, null );
+        View view = inflater.inflate( R.layout.fragment_show_account_details, null );
         nameView = ( TextView ) view.findViewById( R.id.details_name );
         pseudoView = ( TextView ) view.findViewById( R.id.details_pseudo );
         emailView = ( TextView ) view.findViewById( R.id.details_email );

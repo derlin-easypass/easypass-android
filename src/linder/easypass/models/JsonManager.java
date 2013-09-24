@@ -1,4 +1,4 @@
-package linder.easypass.what;
+package linder.easypass.models;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

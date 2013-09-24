@@ -1,4 +1,4 @@
-package linder.easypass;
+package linder.easypass.session_details;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -17,7 +17,15 @@ import com.dropbox.sync.android.*;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.woozzu.android.widget.IndexableListView;
-import linder.easypass.what.*;
+import linder.easypass.models.DboxConfig;
+import linder.easypass.R;
+import linder.easypass.misc.Util;
+import linder.easypass.account_details.AccountActivity;
+import linder.easypass.models.Account;
+import linder.easypass.models.DataWrapper;
+import linder.easypass.models.JsonManager;
+import linder.easypass.settings.SettingsActivity;
+import linder.easypass.misc.*;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
@@ -27,9 +35,9 @@ import java.util.concurrent.Semaphore;
 
 import static linder.easypass.EasyPassApplication.TAG;
 import static linder.easypass.EasyPassApplication.showToast;
-import static linder.easypass.what.AccountActivity.*;
+import static linder.easypass.account_details.AccountActivity.*;
 
-public class NoteDetailFragment extends Fragment {
+public class SessionDetailFragment extends Fragment {
 
     // keys to the bundle's extras
     private static final String BUNDLE_ARG_FILE_PATH = "path";
@@ -117,12 +125,12 @@ public class NoteDetailFragment extends Fragment {
      * ****************************************************************/
 
 
-    public NoteDetailFragment() {
+    public SessionDetailFragment() {
     }
 
 
-    public static NoteDetailFragment getInstance( DbxPath path, String password ) {
-        NoteDetailFragment fragment = new NoteDetailFragment();
+    public static SessionDetailFragment getInstance( DbxPath path, String password ) {
+        SessionDetailFragment fragment = new SessionDetailFragment();
         Bundle args = new Bundle();
         args.putString( BUNDLE_ARG_FILE_PATH, path.toString() );
         args.putString( BUNDLE_ARG_PASSWD, password );
@@ -138,7 +146,7 @@ public class NoteDetailFragment extends Fragment {
     @Override
     public View onCreateView( LayoutInflater inflater, ViewGroup container,
                               Bundle savedInstanceState ) {
-        final View view = inflater.inflate( R.layout.fragment_note_detail, container, false );
+        final View view = inflater.inflate( R.layout.fragment_session_detail, container, false );
 
         mList = ( IndexableListView ) view.findViewById( com.woozzu.android.indexablelistview.R
                 .id.listview );
@@ -232,7 +240,7 @@ public class NoteDetailFragment extends Fragment {
         mCurrentSessionName = sessionName;
         getActivity().setTitle( sessionName );
 
-        DbxAccount dbAccount = NotesAppConfig.getAccountManager( getActivity() ).getLinkedAccount();
+        DbxAccount dbAccount = DboxConfig.getAccountManager( getActivity() ).getLinkedAccount();
         if( dbAccount == null ) {
             Log.e( TAG, "No linked account." );
             return;
@@ -303,21 +311,23 @@ public class NoteDetailFragment extends Fragment {
     @Override
     public void onCreateOptionsMenu( Menu menu, MenuInflater inflater ) {
         super.onCreateOptionsMenu( menu, inflater );
-        MenuItem settingsMenu = menu.add( R.string.settings );
-        settingsMenu.setOnMenuItemClickListener( new MenuItem.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick( MenuItem item ) {
-                startActivity( new Intent( getActivity(), SettingsActivity.class ) );
-                return true;
-            }
-        } );
-        MenuItem newAccountMenu = menu.add( "New account" );
+
+        MenuItem newAccountMenu = menu.add(  R.string.menu_new_account );
         newAccountMenu.setOnMenuItemClickListener( new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick( MenuItem item ) {
                 Intent showIntent = new Intent( getActivity(), AccountActivity.class );
                 showIntent.putExtra( EXTRA_REQUEST_CODE_KEY, NEW_REQUEST_CODE );
                 startActivityForResult( showIntent, ACCOUNT_ACTIVITY_NEW_REQUEST_CODE );
+                return true;
+            }
+        } );
+
+        MenuItem settingsMenu = menu.add( R.string.settings );
+        settingsMenu.setOnMenuItemClickListener( new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick( MenuItem item ) {
+                startActivity( new Intent( getActivity(), SettingsActivity.class ) );
                 return true;
             }
         } );
@@ -360,7 +370,7 @@ public class NoteDetailFragment extends Fragment {
                     Util.copyToClipBoard( getActivity(), accountName + ":pass", pass );
                     msg = "Password copied to clipboard";
                 } else {
-                    msg = "Password is empty !";
+                    msg = "Copy failed : password is empty !";
                 }
                 showToast( msg );
                 break;
@@ -535,7 +545,7 @@ public class NoteDetailFragment extends Fragment {
 
     private static class DbxLoadHandler extends Handler {
 
-        private final WeakReference<NoteDetailFragment> fragment;
+        private final WeakReference<SessionDetailFragment> fragment;
 
         public static final int MESSAGE_IS_SHOWING_LATEST = 0;
         public static final int MESSAGE_DO_UPDATE = 1;
@@ -545,14 +555,14 @@ public class NoteDetailFragment extends Fragment {
         private static final int TRUE = 1, FALSE = 0, UNDEF = -1;
 
 
-        public DbxLoadHandler( NoteDetailFragment containingFragment ) {
-            fragment = new WeakReference<NoteDetailFragment>( containingFragment );
+        public DbxLoadHandler( SessionDetailFragment containingFragment ) {
+            fragment = new WeakReference<SessionDetailFragment>( containingFragment );
         }
 
 
         @Override
         public void handleMessage( Message msg ) {
-            NoteDetailFragment frag = fragment.get();
+            SessionDetailFragment frag = fragment.get();
             if( frag == null ) {
                 return;
             }

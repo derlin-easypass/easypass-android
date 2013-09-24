@@ -1,4 +1,4 @@
-package linder.easypass;
+package linder.easypass.session_list.folders_handling;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -10,6 +10,8 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
 import com.dropbox.sync.android.DbxFileInfo;
+import linder.easypass.R;
+import linder.easypass.misc.Util;
 
 import java.util.List;
 

@@ -1,4 +1,4 @@
-package linder.easypass.what;
+package linder.easypass.misc;
 
 import android.text.Editable;
 import android.text.TextWatcher;

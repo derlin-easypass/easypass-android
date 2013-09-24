@@ -1,4 +1,4 @@
-package linder.easypass;
+package linder.easypass.session_list.folders_handling;
 
 import com.dropbox.sync.android.DbxFileInfo;
 

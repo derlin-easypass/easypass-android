@@ -1,10 +1,10 @@
-package linder.easypass;
+package linder.easypass.models;
 
 import android.content.Context;
 import com.dropbox.sync.android.DbxAccountManager;
 
-public final class NotesAppConfig {
-    private NotesAppConfig() {
+public final class DboxConfig {
+    private DboxConfig() {
     }
 
 

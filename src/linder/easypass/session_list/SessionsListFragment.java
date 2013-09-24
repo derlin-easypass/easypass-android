@@ -1,4 +1,4 @@
-package linder.easypass;
+package linder.easypass.session_list;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -20,8 +20,13 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 import com.dropbox.sync.android.*;
-import linder.easypass.what.JsonManager;
-import linder.easypass.what.SettingsActivity;
+import linder.easypass.*;
+import linder.easypass.models.DboxConfig;
+import linder.easypass.models.JsonManager;
+import linder.easypass.session_list.folders_handling.FolderAdapter;
+import linder.easypass.session_list.folders_handling.FolderLoader;
+import linder.easypass.settings.SettingsActivity;
+import linder.easypass.misc.Util;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -29,10 +34,10 @@ import java.util.List;
 
 import static linder.easypass.EasyPassApplication.EP_EXTENSION;
 
-public class NoteListFragment extends ListFragment implements LoaderCallbacks<List<DbxFileInfo>> {
+public class SessionsListFragment extends ListFragment implements LoaderCallbacks<List<DbxFileInfo>> {
 
     @SuppressWarnings( "unused" )
-    private static final String TAG = NoteListFragment.class.getName();
+    private static final String TAG = SessionsListFragment.class.getName();
 
     private static final String STATE_ACTIVATED_POSITION = "activated_position";
 
@@ -82,7 +87,7 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
     @Override
     public View onCreateView( LayoutInflater inflater, ViewGroup container,
                               Bundle savedInstanceState ) {
-        View view = inflater.inflate( R.layout.fragment_note_list, container, false );
+        View view = inflater.inflate( R.layout.fragment_sessions_list, container, false );
 
         mEmptyText = view.findViewById( R.id.empty_text );
         mLinkButton = view.findViewById( R.id.link_button );
@@ -91,7 +96,7 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
         mLinkButton.setOnClickListener( new View.OnClickListener() {
             @Override
             public void onClick( View v ) {
-                mAccountManager.startLink( NoteListFragment.this, 0 );
+                mAccountManager.startLink( SessionsListFragment.this, 0 );
             }
         } );
 
@@ -220,7 +225,7 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
             throw new IllegalStateException( "Activity must implement fragment's callbacks." );
         }
 
-        mAccountManager = NotesAppConfig.getAccountManager( activity );
+        mAccountManager = DboxConfig.getAccountManager( activity );
 
         mCallbacks = ( Callbacks ) activity;
         setHasOptionsMenu( true );
@@ -363,8 +368,7 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
                 try {
 
 
-                    DbxFileSystem fs = DbxFileSystem.forAccount( NotesAppConfig.getAccountManager
-                            ( getActivity() ).getLinkedAccount() );
+                    DbxFileSystem fs = DbxFileSystem.forAccount( DboxConfig.getAccountManager( getActivity() ).getLinkedAccount() );
                     DbxFile file = fs.create( filePath );
                     new JsonManager().serialize( new ArrayList<Object[]>(),
                             EasyPassApplication.CRYPTO_ALGORITHM, file.getWriteStream(), password );

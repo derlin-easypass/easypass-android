@@ -1,4 +1,4 @@
-package linder.easypass;
+package linder.easypass.misc;
 
 import android.content.ClipData;
 import android.content.Context;
