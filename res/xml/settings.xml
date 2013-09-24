@@ -4,18 +4,17 @@
 
     <PreferenceCategory android:title="Sessions">
 
-        <EditTextPreference
-            android:key="@string/pref_key_sessions_path"
-            android:title="Session path"
-            android:defaultValue=""
-            android:summary="" />
-
         <CheckBoxPreference
             android:defaultValue="false"
             android:key="@string/pref_key_password_caching"
             android:title="Password Caching"
             android:summary="Allow the application to cache the sessions passwords (unsecure)" />
 
+        <Preference
+            android:key="@string/clear_cache_pref"
+            android:title="Clear cached passwords"
+            android:defaultValue="false"
+            android:summary="Erases all the cached passwords, if any" />
     </PreferenceCategory>
 
 </PreferenceScreen>

@@ -39,6 +39,7 @@ public class NoteDetailFragment extends Fragment {
     private static final String CRYPTO_ALGORITHM = "aes-128-cbc";
     // request codes for startActivityForResult calls
     private static final int ACCOUNT_ACTIVITY_REQUEST_CODE = 23;
+    private static final int ACCOUNT_ACTIVITY_NEW_REQUEST_CODE = 20;
 
     // context menu items
     private static final int MENU_COPY_PASS = 0;
@@ -148,7 +149,12 @@ public class NoteDetailFragment extends Fragment {
         mList.setAdapter( adapter );
         mList.setFastScrollEnabled( true );
         registerForContextMenu( mList );
-
+        mList.setOnItemClickListener( new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick( AdapterView<?> parent, View view, int position, long id ) {
+                mList.showContextMenuForChild( view );
+            }
+        } );
         // adds a listener to filter the accounts on text change
         inputSearch = ( EditText ) view.findViewById( R.id.inputSearch );
         inputSearch.addTextChangedListener( new TextWatcherAdapter( inputSearch,
@@ -164,6 +170,7 @@ public class NoteDetailFragment extends Fragment {
         loadingSpinnerView = view.findViewById( R.id.note_loading );
         errorMessageView = ( TextView ) view.findViewById( R.id.error_message );
 
+        setHasOptionsMenu( true );
         return view;
     }
 
@@ -175,11 +182,6 @@ public class NoteDetailFragment extends Fragment {
             if( resultCode == Activity.RESULT_OK ) {
 
                 Bundle extras = data.getExtras();
-
-                // if the account was not modified, no need to go further
-                //                boolean isAccountModified = data.getBooleanExtra( AccountActivity
-                //                        .EXTRA_ACCOUNT_MODIFIED, false );
-                //                if( !isAccountModified ) return;
 
                 // updates the data with the possible modifications
                 Account originalAccount = dataWrapper.getAccount( extras.getString(
@@ -200,6 +202,15 @@ public class NoteDetailFragment extends Fragment {
                 }
                 userHasModifiedData = true;
             }
+        } else if( requestCode == ACCOUNT_ACTIVITY_NEW_REQUEST_CODE ) {
+            Account account = new Gson().fromJson( data.getStringExtra( EXTRA_ACCOUNT_KEY
+            ), Account.class );
+            dataWrapper.addAccount( account );
+            userHasModifiedData = true;
+            // clears and add to keep the items sorted (sorting made bade datawrapper)
+            adapter.clear();
+            adapter.addAll( dataWrapper.getAccountNames() );
+            adapter.notifyDataSetChanged();
         } else {
             super.onActivityResult( requestCode, resultCode, data );
         }
@@ -285,7 +296,34 @@ public class NoteDetailFragment extends Fragment {
         }
     }
 
+
     /* *****************************************************************
+     * option menu management
+     * ****************************************************************/
+    @Override
+    public void onCreateOptionsMenu( Menu menu, MenuInflater inflater ) {
+        super.onCreateOptionsMenu( menu, inflater );
+        MenuItem settingsMenu = menu.add( R.string.settings );
+        settingsMenu.setOnMenuItemClickListener( new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick( MenuItem item ) {
+                startActivity( new Intent( getActivity(), SettingsActivity.class ) );
+                return true;
+            }
+        } );
+        MenuItem newAccountMenu = menu.add( "New account" );
+        newAccountMenu.setOnMenuItemClickListener( new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick( MenuItem item ) {
+                Intent showIntent = new Intent( getActivity(), AccountActivity.class );
+                showIntent.putExtra( EXTRA_REQUEST_CODE_KEY, NEW_REQUEST_CODE );
+                startActivityForResult( showIntent, ACCOUNT_ACTIVITY_NEW_REQUEST_CODE );
+                return true;
+            }
+        } );
+    }
+
+     /* *****************************************************************
      * context menu management
      * ****************************************************************/
 
@@ -412,7 +450,7 @@ public class NoteDetailFragment extends Fragment {
                         ArrayList<Object[]> contents = ( ArrayList<Object[]> ) new JsonManager()
                                 .deserialize( CRYPTO_ALGORITHM, sessionFile.getReadStream(),
                                         mCurrentPassword, new TypeToken<ArrayList<Object[]>>() {
-                        }.getType() );
+                                }.getType() );
 
                         if( contents != null ) {
                             mHasLoadedAnyData = true;

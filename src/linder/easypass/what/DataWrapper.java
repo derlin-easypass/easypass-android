@@ -13,6 +13,8 @@ public class DataWrapper {
     private List<Account> data;
     private String sessionName, password;
 
+    public static final String[] EP_HEADERS = new String[]{ "Account name", "Pseudo", "Email",
+            "Password", "Notes" };
 
     public DataWrapper( List<Object[]> data, String sessionName, String password ) {
         this.sessionName = sessionName;
@@ -35,7 +37,7 @@ public class DataWrapper {
         if( data == null ) return names;
 
         for( Account session : data ) {
-            names.add( session.getName() );
+            names.add( session.getNameOrDefault() );
         }//end for
         Collections.sort( names );
         return names;
@@ -87,5 +89,10 @@ public class DataWrapper {
     public void removeAccount( String accountName ) {
         Account account = getAccount( accountName );
         if( account != null ) data.remove( account );
+    }
+
+
+    public void addAccount( Account account ) {
+        data.add( account );
     }
 }//end class

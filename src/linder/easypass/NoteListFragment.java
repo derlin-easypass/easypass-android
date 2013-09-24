@@ -8,7 +8,9 @@ import android.os.Bundle;
 import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager.LoaderCallbacks;
 import android.support.v4.content.Loader;
+import android.text.InputType;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.*;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.MenuItem.OnMenuItemClickListener;
@@ -18,10 +20,14 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 import com.dropbox.sync.android.*;
+import linder.easypass.what.JsonManager;
+import linder.easypass.what.SettingsActivity;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
-import static linder.easypass.EasyPassApplication.*;
+import static linder.easypass.EasyPassApplication.EP_EXTENSION;
 
 public class NoteListFragment extends ListFragment implements LoaderCallbacks<List<DbxFileInfo>> {
 
@@ -115,7 +121,7 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
         AdapterView.AdapterContextMenuInfo info = ( AdapterView.AdapterContextMenuInfo ) menuInfo;
 
         DbxFileInfo fileInfo = ( DbxFileInfo ) getListAdapter().getItem( info.position );
-        menu.setHeaderTitle( Util.stripExtension( "data_ser", fileInfo.path.getName() ) );
+        menu.setHeaderTitle( Util.stripExtension( EP_EXTENSION, fileInfo.path.getName() ) );
         menu.add( Menu.NONE, MENU_RENAME, Menu.NONE, R.string.menu_rename );
         menu.add( Menu.NONE, MENU_DELETE, Menu.NONE, R.string.menu_delete );
     }
@@ -275,8 +281,8 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
                             if( TextUtils.isEmpty( filename ) ) {
                                 filename = filenameInput.getHint().toString();
                             }
-                            if( !filename.endsWith( ".txt" ) ) {
-                                filename += ".txt";
+                            if( !filename.endsWith( "." + EP_EXTENSION ) ) {
+                                filename += "." + EP_EXTENSION;
                             }
 
                             DbxPath p;
@@ -287,14 +293,13 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
                                     return;
                                 }
                                 p = new DbxPath( "/" + filename );
+                                showNewSessionPassDialog( p );
                             } catch( DbxPath.InvalidPathException e ) {
                                 // TODO: build a custom dialog that won't even allow invalid
                                 // filenames
                                 Toast.makeText( getActivity(), "invalid filename",
                                         Toast.LENGTH_LONG ).show();
-                                return;
                             }
-                            mCallbacks.onItemSelected( p );
                         }
                     } ).setNegativeButton( R.string.cancel, new DialogInterface.OnClickListener() {
                         @Override
@@ -302,6 +307,15 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
                             // Do nothing.
                         }
                     } ).show();
+                    return true;
+                }
+            } );
+
+            MenuItem settingsMenu = menu.add( R.string.settings );
+            settingsMenu.setOnMenuItemClickListener( new MenuItem.OnMenuItemClickListener() {
+                @Override
+                public boolean onMenuItemClick( MenuItem item ) {
+                    startActivity( new Intent( getActivity(), SettingsActivity.class ) );
                     return true;
                 }
             } );
@@ -319,6 +333,60 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
             } );
         }
     }
+
+
+    private void showNewSessionPassDialog( final DbxPath path ) {
+        final EditText input = new EditText( getActivity() );
+        input.setInputType( InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD );
+
+        new AlertDialog.Builder( getActivity() ).setTitle( "New session password" ).setView(
+                input ).setPositiveButton( "Create session", new DialogInterface.OnClickListener() {
+
+            public void onClick( DialogInterface dialog, int whichButton ) {
+                String pass = input.getText().toString();
+                if( pass.length() > 3 ) {
+                    createNewNoteThread( path, pass );
+                }
+            }
+        } ).setNegativeButton( "Cancel", new DialogInterface.OnClickListener() {
+            public void onClick( DialogInterface dialog, int whichButton ) {
+                dialog.dismiss();
+            }
+        } ).create().show();
+    }//end showNewSessionDialog
+
+
+    private void createNewNoteThread( final DbxPath filePath, final String password ) {
+        new Thread() {
+            @Override
+            public void run() {
+                try {
+
+
+                    DbxFileSystem fs = DbxFileSystem.forAccount( NotesAppConfig.getAccountManager
+                            ( getActivity() ).getLinkedAccount() );
+                    DbxFile file = fs.create( filePath );
+                    new JsonManager().serialize( new ArrayList<Object[]>(),
+                            EasyPassApplication.CRYPTO_ALGORITHM, file.getWriteStream(), password );
+
+                } catch( DbxException e ) {
+                    Log.e( TAG, "failed to open or create file.", e );
+                    return;
+                } catch( IOException e ) {
+                    e.printStackTrace();
+                }
+                super.run();    //To change body of overridden methods use File | Settings | File
+                // Templates.
+            }
+
+
+        }.start();
+    }//end createNewNote
+
+
+    /* *****************************************************************
+     * loader
+     * ****************************************************************/
 
 
     @Override

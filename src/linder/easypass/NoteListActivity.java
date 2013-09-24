@@ -15,7 +15,7 @@ import static linder.easypass.EasyPassApplication.getPrefs;
 public class NoteListActivity extends FragmentActivity implements NoteListFragment.Callbacks {
 
     private boolean mTwoPane;
-    private boolean arePassCached = true;
+    private boolean arePassCached;
 
 
     @Override
@@ -28,6 +28,14 @@ public class NoteListActivity extends FragmentActivity implements NoteListFragme
             ( ( NoteListFragment ) getSupportFragmentManager().findFragmentById( R.id.note_list )
             ).setActivateOnItemClick( true );
         }
+    }
+
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        arePassCached = getPrefs().getBoolean( getString( R.string.pref_key_password_caching ),
+                false );
     }
 
 

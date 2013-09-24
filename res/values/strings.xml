@@ -32,4 +32,5 @@
     <string name="search">Search</string>
     <string name="menu_copy_pseudo">Copy pseudo</string>
     <string name="back">Back</string>
+    <string name="clear_cache_pref">clear_cache_preference</string>
 </resources>

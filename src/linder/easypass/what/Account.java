@@ -137,5 +137,22 @@ public class Account {
         return ret == null ? "" : ret;
     }
 
+    @Override
+    public boolean equals( Object o ) {
+        if( !( o instanceof Account ) ) return false;
+
+        Account other = ( Account ) o;
+        for( int i = 0; i < DataWrapper.EP_HEADERS.length; i++ ) {
+
+            if( account[ i ] == null ) {
+                if( other.account != null ) return false;
+                continue;
+            }
+
+            if( !( account[ i ] ).equals( other.account[ i ] ) ) return false;
+        }//end for
+
+        return true;
+    }
 
 }//end class

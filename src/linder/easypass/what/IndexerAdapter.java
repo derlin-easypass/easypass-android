@@ -18,6 +18,7 @@ import java.util.List;
 public class IndexerAdapter extends ArrayAdapter<String> implements SectionIndexer {
 
     private final static String SECTIONS = "#ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    private final static String MINIFIED_SECTIONS = "#A.EFG.JKLM.OP.RS.Z";
     private WeakReference<DataWrapper> dataWrapperReference;
     private SessionsFilter filter;
 

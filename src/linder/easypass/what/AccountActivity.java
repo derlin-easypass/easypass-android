@@ -23,10 +23,12 @@ public class AccountActivity extends FragmentActivity implements View.OnClickLis
 
     public static final int EDIT_REQUEST_CODE = 9;
     public static final int SHOW_REQUEST_CODE = 8;
+    public static final int NEW_REQUEST_CODE = 7;
 
     public static final String EXTRA_ACCOUNT_KEY = "account";
     public static final String EXTRA_ORIGINAL_ACCOUNT_NAME_kEY = "original_account_name";
     public static final String EXTRA_REQUEST_CODE_KEY = "request_code";
+
 
     Account account;
     private boolean isEditFragmentShowing;
@@ -80,7 +82,9 @@ public class AccountActivity extends FragmentActivity implements View.OnClickLis
                 }
             }
 
-            if( requestCode == SHOW_REQUEST_CODE ) { //show
+            if( requestCode == NEW_REQUEST_CODE ) {
+                showEditFragment();
+            }else if( requestCode == SHOW_REQUEST_CODE ) { //show
                 showShowFragment();
             } else if( requestCode == EDIT_REQUEST_CODE ) {
                 editOnly = true;
@@ -97,12 +101,12 @@ public class AccountActivity extends FragmentActivity implements View.OnClickLis
     private void showShowFragment() {
         if( showFragment == null ) {
             showFragment = new ShowAccountFragment();
-            showFragment.setWeakReference( account );
         }
         getSupportFragmentManager().beginTransaction().replace( R.id.fragment_holder, ( Fragment
                 ) showFragment ).commit();
 
 //        showFragment.setWeakReference( account );
+        showFragment.setWeakReference( account );
         showFragment.updateFields();
         isEditFragmentShowing = false;
 
@@ -112,11 +116,11 @@ public class AccountActivity extends FragmentActivity implements View.OnClickLis
     private void showEditFragment() {
         if( editFragment == null ) {
             editFragment = new EditAccountFragment();
-            editFragment.setWeakReference( account );
         }
         getSupportFragmentManager().beginTransaction().replace( R.id.fragment_holder,
                 ( Fragment ) editFragment ).commit();
 
+        editFragment.setWeakReference( account );
         editFragment.updateFields();
         isEditFragmentShowing = true;
     }//end showEditFragment
