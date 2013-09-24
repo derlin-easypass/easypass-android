@@ -49,7 +49,7 @@
             <TextView
                 android:layout_columnSpan="2"
                 style="@style/header"
-                android:text="Infos" />
+                android:text="@string/account_infos_header" />
 
             <View
                 style="@style/Divider"
@@ -59,7 +59,7 @@
             <!--name-->
             <TextView
                 style="@style/details_label"
-                android:text="Name" />
+                android:text="@string/account_name_txt" />
 
             <EditText
                 android:id="@+id/details_name"
@@ -69,7 +69,7 @@
             <!--pseudo-->
             <TextView
                 style="@style/details_label"
-                android:text="Pseudo" />
+                android:text="@string/account_pseudo_txt" />
 
             <EditText
                 android:id="@+id/details_pseudo"
@@ -79,7 +79,7 @@
             <!--email-->
             <TextView
                 style="@style/details_label"
-                android:text="Email" />
+                android:text="@string/account_email_txt" />
 
             <EditText
                 android:id="@+id/details_email"
@@ -90,7 +90,7 @@
             <!--password-->
             <TextView
                 style="@style/details_label"
-                android:text="Password" />
+                android:text="@string/account_password_txt" />
 
             <EditText
                 style="@style/details_edit_value"
@@ -104,7 +104,7 @@
                 android:layout_columnSpan="2"
                 android:layout_gravity="center"
                 android:gravity="center"
-                android:text="show password"
+                android:text="@string/account_show_passwd_txt"
 
                 />
 
@@ -112,7 +112,7 @@
             <TextView
                 style="@style/header"
                 android:layout_columnSpan="2"
-                android:text="Notes" />
+                android:text="@string/account_notes_txt" />
 
             <View
                 style="@style/Divider"

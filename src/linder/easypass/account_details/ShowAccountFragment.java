@@ -41,8 +41,10 @@ public class ShowAccountFragment extends Fragment implements CompoundButton
         notesView = ( TextView ) view.findViewById( R.id.details_notes );
         passView = ( TextView ) view.findViewById( R.id.details_password );
         checkBox = ( CheckBox ) view.findViewById( R.id.details_show_password );
-        view.findViewById( R.id.show_details_edit_button ).setOnClickListener( ( View.OnClickListener ) getActivity() );
-        view.findViewById( R.id.show_details_back_button ).setOnClickListener( ( View.OnClickListener ) getActivity() );
+        view.findViewById( R.id.show_details_edit_button ).setOnClickListener( ( View
+                .OnClickListener ) getActivity() );
+        view.findViewById( R.id.show_details_back_button ).setOnClickListener( ( View
+                .OnClickListener ) getActivity() );
         updateFields();
         return view;
     }
@@ -62,9 +64,10 @@ public class ShowAccountFragment extends Fragment implements CompoundButton
 
     @Override
     public void updateFields() {
-        if(accountRef == null) return;
+        // be sure to avoid null pointer exceptions
+        if( accountRef == null ) return;
         Account account = accountRef.get();
-        if(account == null || getActivity() == null) return;
+        if( account == null || getActivity() == null ) return;
 
         getActivity().setTitle( account.getNameOrDefault() );
 

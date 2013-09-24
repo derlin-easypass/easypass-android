@@ -146,8 +146,8 @@ public class SessionsListFragment extends ListFragment implements LoaderCallback
             filenameInput.setText( Util.stripExtension( EP_EXTENSION, fileInfo.path.getName() ) );
             filenameInput.setSelectAllOnFocus( true );
 
-            new AlertDialog.Builder( getActivity() ).setTitle( R.string.rename_note_dialog_title
-            ).setView( filenameInput ).setPositiveButton( R.string.rename_note_confirm,
+            new AlertDialog.Builder( getActivity() ).setTitle( R.string.rename_session_dialog_title
+            ).setView( filenameInput ).setPositiveButton( R.string.confirm,
                     new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick( DialogInterface dialog, int whichButton ) {
@@ -268,7 +268,7 @@ public class SessionsListFragment extends ListFragment implements LoaderCallback
         if( mAccountManager.hasLinkedAccount() ) {
 
             // New note
-            MenuItem newNote = menu.add( R.string.new_note_option );
+            MenuItem newNote = menu.add( R.string.new_session_option );
             newNote.setOnMenuItemClickListener( new OnMenuItemClickListener() {
                 @Override
                 public boolean onMenuItemClick( MenuItem item ) {
@@ -278,8 +278,8 @@ public class SessionsListFragment extends ListFragment implements LoaderCallback
                             .TYPE_TEXT_FLAG_NO_SUGGESTIONS );
 
                     new AlertDialog.Builder( getActivity() ).setTitle( R.string
-                            .new_note_dialog_title ).setView( filenameInput ).setPositiveButton(
-                            R.string.new_note_confirm, new DialogInterface.OnClickListener() {
+                            .new_session_dialog_title ).setView( filenameInput ).setPositiveButton(
+                            R.string.confirm, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick( DialogInterface dialog, int whichButton ) {
                             String filename = filenameInput.getText().toString();

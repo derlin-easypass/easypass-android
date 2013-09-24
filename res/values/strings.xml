@@ -6,32 +6,49 @@
 
     <!--merde exemple dropbox-->
     <string name="old_version">old version</string>
-    <string name="link_to_dropbox">link to dropbox</string>
-    <string name="no_notes">no notes</string>
-    <string name="status_folder">status folder</string>
-    <string name="error_failed_load">error : failed load</string>
-    <string name="rename_note_dialog_title">rename note</string>
-    <string name="rename_note_confirm">confirm rename</string>
-    <string name="error_invalid_filename">invalid filename</string>
-    <string name="error_file_already_exists">file already exists</string>
-    <string name="new_note_option">new note optiom</string>
-    <string name="new_note_name_hint">name</string>
-    <string name="new_note_dialog_title">new note</string>
-    <string name="new_note_confirm">confirm new note</string>
-    <string name="unlink_from_dropbox">Unlink</string>
-    <string name="menu_rename">Rename</string>
-    <string name="menu_delete">Delete</string>
-    <string name="pref_key_sessions_path">session path</string>
-    <string name="pref_key_password_caching">password caching</string>
-    <string name="settings">Settings</string>
+    <string name="link_to_dropbox">Link to dropbox</string>
+    <string name="unlink_from_dropbox">Unlink from dropbox</string>
+
+
+    <!--general-->
+    <string name="confirm">Confirm</string>
     <string name="cancel">Cancel</string>
+    <string name="search">Search</string>
     <string name="save">Save</string>
     <string name="edit">Edit</string>
-    <string name="menu_show_details">Show details</string>
-    <string name="menu_copy_pass">Copy pass</string>
-    <string name="search">Search</string>
-    <string name="menu_copy_pseudo">Copy pseudo</string>
     <string name="back">Back</string>
+    <string name="settings">Settings</string>
+
+    <!--sessions list-->
+    <string name="no_sessions">No sessions</string>
+    <string name="status_folder">Folder</string>
+    <string name="rename_session_dialog_title">Rename session</string>
+    <string name="error_invalid_filename">Invalid filename (.data_ser)</string>
+    <string name="new_session_option">New session...</string>
+    <string name="new_session_dialog_title">New session's name</string>
+    <string name="new_note_name_hint">name (no extension)</string>
+
+    <!--settings-->
+    <string name="pref_key_password_caching">password_caching</string>
     <string name="clear_cache_pref">clear_cache_preference</string>
+
+    <!--session details-->
+    <string name="error_failed_load">Error : load failed</string>
+    <string name="error_file_already_exists">file already exists</string>
+    <string name="menu_copy_pass">Copy pass</string>
+    <string name="menu_copy_pseudo">Copy pseudo</string>
+    <string name="menu_rename">Rename</string>
+    <string name="menu_delete">Delete</string>
+    <string name="menu_show_details">Show details</string>
     <string name="menu_new_account">New account</string>
+
+    <!--account details-->
+    <string name="account_infos_header">Infos</string>
+    <string name="account_name_txt">Name</string>
+    <string name="account_pseudo_txt">Pseudo</string>
+    <string name="account_email_txt">Email</string>
+    <string name="account_password_txt">Password</string>
+    <string name="account_show_passwd_txt">Show password</string>
+    <string name="account_notes_txt">Notes</string>
+
 </resources>
