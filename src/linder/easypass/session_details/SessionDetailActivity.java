@@ -17,10 +17,12 @@ public class SessionDetailActivity extends FragmentActivity {
     public static final String EXTRA_PASS = "pass";
 
 
-    @TargetApi( 11 )
+    @TargetApi(11)
     @Override
     protected void onCreate( Bundle savedInstanceState ) {
         super.onCreate( savedInstanceState );
+        overridePendingTransition( R.anim.slide_in_right, R.anim.slide_out_left );
+
         setContentView( R.layout.activity_session_detail );
 
         if( Build.VERSION.SDK_INT >= 11 ) {
@@ -53,9 +55,12 @@ public class SessionDetailActivity extends FragmentActivity {
 
 
     private static class Api11Helper {
-        @TargetApi( 11 )
-        public static void setDisplayHomeAsUpEnabled( SessionDetailActivity activity, boolean value ) {
+        @TargetApi(11)
+        public static void setDisplayHomeAsUpEnabled( SessionDetailActivity activity,
+                                                      boolean value ) {
             activity.getActionBar().setDisplayHomeAsUpEnabled( true );
         }
     }
+
+
 }

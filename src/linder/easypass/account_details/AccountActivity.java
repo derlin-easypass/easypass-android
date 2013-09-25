@@ -7,9 +7,11 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import com.google.gson.Gson;
 import linder.easypass.EasyPassApplication;
 import linder.easypass.R;
@@ -34,6 +36,7 @@ public class AccountActivity extends FragmentActivity implements View.OnClickLis
     Account account;
     private boolean isEditFragmentShowing;
     private int resultType = RESULT_CANCELED;
+    private InputMethodManager inputMethodManager;
 
 
     interface AccountDetailsFragment {
@@ -51,6 +54,7 @@ public class AccountActivity extends FragmentActivity implements View.OnClickLis
     @Override
     protected void onCreate( Bundle savedInstanceState ) {
         super.onCreate( savedInstanceState );
+        overrideTransition();
         setContentView( R.layout.activity_account_details );
 
         if( Build.VERSION.SDK_INT >= 11 ) {
@@ -59,6 +63,10 @@ public class AccountActivity extends FragmentActivity implements View.OnClickLis
             // even if it is never called.
             Api11Helper.setDisplayHomeAsUpEnabled( this, true );
         }
+
+        // for hiding keyboard
+        inputMethodManager = ( InputMethodManager ) getSystemService( Activity
+                .INPUT_METHOD_SERVICE );
 
         if( savedInstanceState == null ) {
             int requestCode = getIntent().getIntExtra( EXTRA_REQUEST_CODE_KEY, -1 );
@@ -81,13 +89,16 @@ public class AccountActivity extends FragmentActivity implements View.OnClickLis
                 }
             }
 
-            if( requestCode == NEW_REQUEST_CODE ) {
-                showEditFragment();
-            } else if( requestCode == SHOW_REQUEST_CODE ) { //show
-                showShowFragment();
-            } else if( requestCode == EDIT_REQUEST_CODE ) {
+            //TODO : cancel new account
+            if(requestCode == SHOW_REQUEST_CODE){
+                editOnly = false;
+                showShowFragment( false );
+            }else if( requestCode == NEW_REQUEST_CODE  ) { //show
+                editOnly = false;
+                showEditFragment( false );
+            }else if( requestCode == EDIT_REQUEST_CODE ) {
                 editOnly = true;
-                showEditFragment();
+                showEditFragment( false );
             } else {
                 Log.e( EasyPassApplication.TAG, "AccountActivity, requestCode invalid" );
                 return;
@@ -97,12 +108,17 @@ public class AccountActivity extends FragmentActivity implements View.OnClickLis
     }
 
 
-    private void showShowFragment() {
+    private void showShowFragment( boolean animate ) {
         if( showFragment == null ) {
             showFragment = new ShowAccountFragment();
         }
-        getSupportFragmentManager().beginTransaction().replace( R.id.fragment_holder,
-                ( Fragment ) showFragment ).commit();
+
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        if( animate ) {
+            transaction.setCustomAnimations( android.R.anim.slide_in_left,
+                    android.R.anim.slide_out_right );
+        }
+        transaction.replace( R.id.fragment_holder, ( Fragment ) showFragment ).commit();
 
         //        showFragment.setWeakReference( account );
         showFragment.setWeakReference( account );
@@ -112,12 +128,16 @@ public class AccountActivity extends FragmentActivity implements View.OnClickLis
     }//end showShowFragment
 
 
-    private void showEditFragment() {
+    private void showEditFragment( boolean animate ) {
         if( editFragment == null ) {
             editFragment = new EditAccountFragment();
         }
-        getSupportFragmentManager().beginTransaction().replace( R.id.fragment_holder,
-                ( Fragment ) editFragment ).commit();
+
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        if( animate ) {
+            transaction.setCustomAnimations( R.anim.slide_in_right, R.anim.slide_out_left );
+        }
+        transaction.replace( R.id.fragment_holder, ( Fragment ) editFragment ).commit();
 
         editFragment.setWeakReference( account );
         editFragment.updateFields();
@@ -129,13 +149,25 @@ public class AccountActivity extends FragmentActivity implements View.OnClickLis
     public boolean onOptionsItemSelected( MenuItem item ) {
         if( item.getItemId() == android.R.id.home ) {
             if( isEditFragmentShowing && editOnly ) {
-                showShowFragment();
+                showShowFragment( true );
             } else {
                 onBackPressed();
             }
             return true;
         }
         return super.onOptionsItemSelected( item );
+    }
+
+
+    private void overrideTransition() {
+        overridePendingTransition( R.anim.fade_in, R.anim.fade_out );
+    }//end overrideTransition
+
+
+    private void hideSoftKeyboard() {
+        ( ( InputMethodManager ) getSystemService( Activity.INPUT_METHOD_SERVICE ) )
+                .toggleSoftInput( InputMethodManager.SHOW_IMPLICIT, 0 );
+
     }
 
 
@@ -148,13 +180,24 @@ public class AccountActivity extends FragmentActivity implements View.OnClickLis
 
 
     @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        overrideTransition();
+    }
+
+
+    @Override
     public void finish() {
         Intent data = new Intent();
         data.putExtra( EXTRA_ACCOUNT_KEY, new Gson().toJson( account ) );
         data.putExtra( EXTRA_ORIGINAL_ACCOUNT_NAME_kEY, originalAccountName );
-        //        data.putExtra( EXTRA_ACCOUNT_MODIFIED, true );
-        setResult( resultType, data );
+        setResult( account.getName() == null ? RESULT_CANCELED : resultType, data );
+
+        //hideSoftKeyboard();
+        //inputMethodManager.toggleSoftInput( InputMethodManager.HIDE_IMPLICIT_ONLY, 0 );
+
         super.finish();
+        overrideTransition();
     }
 
 
@@ -162,7 +205,7 @@ public class AccountActivity extends FragmentActivity implements View.OnClickLis
     public void onClick( View v ) {
         switch( v.getId() ) {
             case R.id.show_details_edit_button:
-                showEditFragment();
+                showEditFragment( true );
                 break;
             case R.id.show_details_back_button:
                 finish();
@@ -173,14 +216,16 @@ public class AccountActivity extends FragmentActivity implements View.OnClickLis
                 if( editOnly ) {
                     finish();
                 } else {
-                    showShowFragment();
+                    showShowFragment( true );
                 }
                 break;
             case R.id.edit_details_cancel_button:
-                if( editOnly ) {
+                //TODO : what if new mode and pressed cancel
+                if( editOnly || account.getName() == null ) {
                     finish();
                 } else {
-                    showShowFragment();
+//                    hideSoftKeyboard();
+                    showShowFragment( true );
                 }
         }
     }

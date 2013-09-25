@@ -17,15 +17,15 @@ import com.dropbox.sync.android.*;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.woozzu.android.widget.IndexableListView;
-import linder.easypass.models.DboxConfig;
 import linder.easypass.R;
-import linder.easypass.misc.Util;
 import linder.easypass.account_details.AccountActivity;
+import linder.easypass.misc.TextWatcherAdapter;
+import linder.easypass.misc.Util;
 import linder.easypass.models.Account;
 import linder.easypass.models.DataWrapper;
+import linder.easypass.models.DboxConfig;
 import linder.easypass.models.JsonManager;
 import linder.easypass.settings.SettingsActivity;
-import linder.easypass.misc.*;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
@@ -139,7 +139,7 @@ public class SessionDetailFragment extends Fragment {
     }
 
     /* *****************************************************************
-     * override common activity/fragment methods
+     * oncreate
      * ****************************************************************/
 
 
@@ -183,9 +183,12 @@ public class SessionDetailFragment extends Fragment {
     }
 
 
+    /* *****************************************************************
+     * on activity result (from account details activity)
+     * ****************************************************************/
     @Override
     public void onActivityResult( int requestCode, int resultCode, Intent data ) {
-
+        Log.d( TAG, "On activity result." );
         if( requestCode == ACCOUNT_ACTIVITY_REQUEST_CODE ) {
             if( resultCode == Activity.RESULT_OK ) {
 
@@ -211,8 +214,9 @@ public class SessionDetailFragment extends Fragment {
                 userHasModifiedData = true;
             }
         } else if( requestCode == ACCOUNT_ACTIVITY_NEW_REQUEST_CODE ) {
-            Account account = new Gson().fromJson( data.getStringExtra( EXTRA_ACCOUNT_KEY
-            ), Account.class );
+            Account account = new Gson().fromJson( data.getStringExtra( EXTRA_ACCOUNT_KEY ),
+                    Account.class );
+            if( account.getName() == null ) return;
             dataWrapper.addAccount( account );
             userHasModifiedData = true;
             // clears and add to keep the items sorted (sorting made bade datawrapper)
@@ -225,12 +229,17 @@ public class SessionDetailFragment extends Fragment {
     }
 
 
+    /* *****************************************************************
+     * on resume
+     * ****************************************************************/
+
+
     @Override
     public void onResume() {
         super.onResume();
 
         //        userHasModifiedData = false;
-        mHasLoadedAnyData = false;
+        //mHasLoadedAnyData = false;
 
         DbxPath path = new DbxPath( getArguments().getString( BUNDLE_ARG_FILE_PATH ) );
         mCurrentPassword = getArguments().getString( BUNDLE_ARG_PASSWD );
@@ -284,6 +293,11 @@ public class SessionDetailFragment extends Fragment {
     }
 
 
+    /* *****************************************************************
+     * on pause
+     * ****************************************************************/
+
+
     @Override
     public void onPause() {
         super.onPause();
@@ -293,7 +307,6 @@ public class SessionDetailFragment extends Fragment {
 
             // If the contents have changed, write them back to Dropbox
             if( userHasModifiedData && sessionFile != null ) {
-                userHasModifiedData = false;
                 // true : asks the thread to close the file after write
                 startWriteLocalChangesThread( true );
             } else {
@@ -312,7 +325,7 @@ public class SessionDetailFragment extends Fragment {
     public void onCreateOptionsMenu( Menu menu, MenuInflater inflater ) {
         super.onCreateOptionsMenu( menu, inflater );
 
-        MenuItem newAccountMenu = menu.add(  R.string.menu_new_account );
+        MenuItem newAccountMenu = menu.add( R.string.menu_new_account );
         newAccountMenu.setOnMenuItemClickListener( new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick( MenuItem item ) {
@@ -423,7 +436,7 @@ public class SessionDetailFragment extends Fragment {
         }// end switch
         return true;
     }
-     /* *****************************************************************
+    /* *****************************************************************
      * sync management
      * ****************************************************************/
 
@@ -434,7 +447,14 @@ public class SessionDetailFragment extends Fragment {
             public void run() {
                 synchronized( sessionFileLock ) {
                     // do nothing is the file is null or if the data where modified locally
-                    if( sessionFile == null || userHasModifiedData ) {
+//                    if( sessionFile == null || userHasModifiedData ) {
+//                        return;
+//                    }
+                    if( sessionFile == null ) {
+                        handler.sendLoadFailedMessage( "Error : the session file is null..." );
+                        return;
+                    }else if(userHasModifiedData ) {
+                        handler.sendUpdateDoneWithoutChangesMessage();
                         return;
                     }
                     boolean updated;
@@ -460,7 +480,7 @@ public class SessionDetailFragment extends Fragment {
                         ArrayList<Object[]> contents = ( ArrayList<Object[]> ) new JsonManager()
                                 .deserialize( CRYPTO_ALGORITHM, sessionFile.getReadStream(),
                                         mCurrentPassword, new TypeToken<ArrayList<Object[]>>() {
-                                }.getType() );
+                        }.getType() );
 
                         if( contents != null ) {
                             mHasLoadedAnyData = true;
@@ -505,6 +525,7 @@ public class SessionDetailFragment extends Fragment {
                         new JsonManager().serialize( dataWrapper.getArrayOfObjects(),
                                 CRYPTO_ALGORITHM, sessionFile.getWriteStream(), mCurrentPassword );
                         Log.d( TAG, "write done" );
+                        userHasModifiedData = false;
                     } catch( Exception e ) {
                         Log.e( TAG, "failed to write to file", e );
                     }
@@ -577,9 +598,12 @@ public class SessionDetailFragment extends Fragment {
 
                 case MESSAGE_DO_UPDATE:
                     // updates only if the user didn't modify the data
-                    if( !frag.userHasModifiedData ) {
+                    if( frag.userHasModifiedData ) {
+                        sendUpdateDoneWithoutChangesMessage();
+                    } else {
                         frag.startUpdateOnBackgroundThread();
                     }
+
                     return;
 
                 case MESSAGE_UPDATE_DONE:

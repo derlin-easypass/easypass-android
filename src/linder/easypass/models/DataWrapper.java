@@ -1,7 +1,5 @@
 package linder.easypass.models;
 
-import linder.easypass.models.Account;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -48,7 +46,7 @@ public class DataWrapper {
 
     public Account getAccount( String name ) {
         for( Account account : data ) {
-            if( account.getName().equals( name ) ) return account;
+            if( account.getNameOrDefault().equals( name ) ) return account;
         }//end for
         return null;
     }//end getAccount

@@ -10,6 +10,7 @@ import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.Toast;
 import linder.easypass.EasyPassApplication;
 import linder.easypass.R;
 import linder.easypass.models.Account;
@@ -89,7 +90,14 @@ public class EditAccountFragment extends Fragment implements CompoundButton
             Log.e( EasyPassApplication.TAG, "account is null in editaccount fragment onclick" );
             return;
         }
-        account.setName( editName.getText().toString() );
+
+        String name = editName.getText().toString();
+        if( name == null || name.isEmpty()){
+            Toast.makeText( getActivity(), "The account name cannot be empty",
+                    Toast.LENGTH_LONG ).show();
+            return;
+        }
+        account.setName( name );
         account.setPseudo( editPseudo.getText().toString() );
         account.setEmail( editEmail.getText().toString() );
         account.setPassword( editPass.getText().toString() );

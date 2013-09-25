@@ -25,7 +25,7 @@
     <string name="rename_session_dialog_title">Rename session</string>
     <string name="error_invalid_filename">Invalid filename (.data_ser)</string>
     <string name="new_session_option">New session...</string>
-    <string name="new_session_dialog_title">New session's name</string>
+    <string name="new_session_dialog_title">New session\'s name</string>
     <string name="new_note_name_hint">name (no extension)</string>
 
     <!--settings-->

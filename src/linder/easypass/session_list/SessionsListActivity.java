@@ -24,6 +24,8 @@ public class SessionsListActivity extends FragmentActivity implements SessionsLi
     @Override
     public void onCreate( Bundle savedInstanceState ) {
         super.onCreate( savedInstanceState );
+        overridePendingTransition( android.R.anim.slide_in_left, android.R.anim.slide_out_right );
+
         setContentView( R.layout.activity_sessions_list );
 
         if( findViewById( R.id.note_detail_container ) != null ) {

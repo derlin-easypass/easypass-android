@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.preference.PreferenceManager;
-import android.util.Log;
 import android.widget.Toast;
 
 /**
@@ -20,8 +19,6 @@ public class EasyPassApplication extends Application {
     public static String CRYPTO_ALGORITHM = "aes-128-cbc";
 
     public static final String KEY_CACHED_PASSWD_PREFIX = "cached_passwd_";
-    public static final String KEY_OPENED_SESSION = "opened_session";
-
 
     private static Context context;
     private static SharedPreferences prefs;
@@ -59,16 +56,6 @@ public class EasyPassApplication extends Application {
         Toast error = Toast.makeText( context, msg, Toast.LENGTH_LONG );
         error.show();
     }
-
-
-    public static void logd( String msg ) {
-        Log.d( TAG, msg );
-    }//end logd
-
-
-    public static void logd( String msg, Exception e ) {
-        Log.d( TAG, msg, e );
-    }//end logd
 
 
 }//end class
