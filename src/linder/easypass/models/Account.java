@@ -1,6 +1,7 @@
 package linder.easypass.models;
 
-import linder.easypass.models.DataWrapper;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * User: lucy
@@ -9,36 +10,40 @@ import linder.easypass.models.DataWrapper;
  */
 public class Account {
 
-    private Object[] account;
+    private Map<String,String> account;
 
-    private final static int NAME = 0;
-    private final static int PSEUDO = 1;
-    private final static int EMAIL = 2;
-    private final static int PASSWORD = 3;
-    private final static int NOTES = 4;
+    private final static String NAME = "name";
+    private final static String PSEUDO = "pseudo";
+    private final static String EMAIL = "email";
+    private final static String PASSWORD = "password";
+    private final static String NOTES = "notes";
+    private final static String CREAT_DATE = "creation date";
+    private final static String MODIF_DATE = "modification date";
+
+    private static  String[] COMPARABLE_HEADERS = new String[]{NAME, PSEUDO, EMAIL, PASSWORD, NOTES};
 
 
     public Account( String pseudo, String email, String name, String notes, String password ) {
-        account = new Object[ 5 ];
-        account[ 0 ] = name;
-        account[ 1 ] = pseudo;
-        account[ 2 ] = email;
-        account[ 3 ] = password;
-        account[ 4 ] = notes;
+        account = new HashMap<String, String>(  );
+        account.put( NAME, name);
+        account.put( PSEUDO, pseudo );
+        account.put( EMAIL, email );
+        account.put( PASSWORD, password );
+        account.put( NOTES, notes );
     }//end constructor
 
 
-    public Account( Object[] obj ) {
+    public Account( Map<String,String> obj ) {
         account = obj;
     }//end constructor
 
 
     public Account() {
-       account = new Object[5];
+       this("", "", "", "", "");
     }
 
 
-    public Object[] getRaw() {
+    public Map<String,String> getRaw() {
         return account;
     }//end asArrayObject
 
@@ -49,9 +54,9 @@ public class Account {
             boolean found = false;
             pattern = pattern.toLowerCase();
 
-            for( int i = 0; i < account.length; i++ ) {
-                if( i == PASSWORD ) continue;
-                if( ( ( String ) account[ i ] ).toLowerCase().contains( pattern ) ) found = true;
+            for( String i : account.keySet() ){
+                if( PASSWORD.equals( i ) ) continue;
+                if( account.get( i ).toLowerCase().contains( pattern ) ) found = true;
             }//end for
 
             if( !found ) return false;
@@ -61,81 +66,81 @@ public class Account {
 
 
     public String getEmail() {
-        return ( String ) account[ EMAIL ];
+        return account.get( EMAIL );
     }
 
 
     public void setEmail( String email ) {
-        account[ EMAIL ] = email;
+        account.put(  EMAIL, email);
     }
 
 
     public String getName() {
-        return ( String ) account[ NAME ];
+        return account.get( NAME );
     }
 
 
     public void setName( String name ) {
-        account[ NAME ] = name;
+        account.put(  NAME, name);
     }
 
 
     public String getNotes() {
-        return ( String ) account[ NOTES ];
+        return account.get( NOTES );
     }
 
 
     public void setNotes( String notes ) {
-        account[ NOTES ] = notes;
+        account.put(  NOTES , notes);
     }
 
 
     public String getPassword() {
-        return ( String ) account[ PASSWORD ];
+        return account.get( PASSWORD );
     }
 
 
     public void setPassword( String password ) {
-        account[ PASSWORD ] = password;
+        account.put( PASSWORD, password);
     }
 
 
     public String getPseudo() {
-        return ( String ) account[ PSEUDO ];
+        return account.get( PSEUDO );
     }
 
 
     public void setPseudo( String pseudo ) {
-        account[ PSEUDO ] = pseudo;
+        account.put(  PSEUDO, pseudo);
     }
 
 
     public String getEmailOrDefault() {
-        String ret = ( String ) account[ EMAIL ];
+        String ret = getEmail();
         return ret == null ? "" : ret;
     }
 
 
     public String getNameOrDefault() {
-        String ret = ( String ) account[ NAME ];
+        String ret = getName();
         return ret == null ? "" : ret;
     }
 
 
     public String getNotesOrDefault() {
-        String ret = ( String ) account[ NOTES ];
+        String ret = getNotes();
         return ret == null ? "" : ret;
     }
 
 
     public String getPasswordOrDefault() {
-        String ret = ( String ) account[ PASSWORD ];
+        String ret = getPassword();
         return ret == null ? "" : ret;
     }
 
 
     public String getPseudoOrDefault() {
-        String ret = ( String ) account[ PSEUDO ];
+        String ret = getPseudo();
         return ret == null ? "" : ret;
     }
 
@@ -144,14 +149,10 @@ public class Account {
         if( !( o instanceof Account ) ) return false;
 
         Account other = ( Account ) o;
-        for( int i = 0; i < DataWrapper.EP_HEADERS.length; i++ ) {
-
-            if( account[ i ] == null ) {
-                if( other.account != null ) return false;
-                continue;
+        for( String i : COMPARABLE_HEADERS){
+            if( !account.get( i ).equals( other.account.get(i) )  ) {
+                return false;
             }
-
-            if( !( account[ i ] ).equals( other.account[ i ] ) ) return false;
         }//end for
 
         return true;

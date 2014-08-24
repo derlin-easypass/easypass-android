@@ -1,8 +1,6 @@
 package linder.easypass.models;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * User: lucy
@@ -24,9 +22,10 @@ public class DataWrapper {
     }
 
 
-    public void setData( List<Object[]> data ) {
+    public void setData( Object o ) {
+        List<Map<String,String>> data = ( List<Map<String,String>> ) o;
         this.data = new ArrayList<Account>();
-        for( Object[] obj : data ) {
+        for( Map<String,String> obj : data ) {
             this.data.add( new Account( obj ) );
         }//end for
     }
@@ -60,8 +59,8 @@ public class DataWrapper {
     }
 
 
-    public List<Object[]> getArrayOfObjects() {
-        List<Object[]> array = new ArrayList<Object[]>();
+    public List<Map<String,String>> getArrayOfObjects() {
+        List<Map<String,String>> array = new ArrayList<Map<String, String>>(  );
 
         for( Account account : data ) {
             array.add( account.getRaw() );

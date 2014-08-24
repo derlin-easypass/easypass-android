@@ -30,7 +30,7 @@ import linder.easypass.settings.SettingsActivity;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
 import java.util.concurrent.Semaphore;
 
 import static linder.easypass.EasyPassApplication.TAG;
@@ -477,9 +477,9 @@ public class SessionDetailFragment extends Fragment {
                     // or there was an external change in the sessionFile
                     try {
                         Log.d( TAG, "starting read" );
-                        ArrayList<Object[]> contents = ( ArrayList<Object[]> ) new JsonManager()
+                        Object contents = new JsonManager()
                                 .deserialize( CRYPTO_ALGORITHM, sessionFile.getReadStream(),
-                                        mCurrentPassword, new TypeToken<ArrayList<Object[]>>() {
+                                        mCurrentPassword, new TypeToken<ArrayList<HashMap<String,String>>>() {
                         }.getType() );
 
                         if( contents != null ) {
@@ -542,7 +542,7 @@ public class SessionDetailFragment extends Fragment {
     }// end startWriteLocalChanges
 
 
-    private void applyNewData( List<Object[]> data ) {
+    private void applyNewData( Object data ) {
         // if the data where modified, do nothing
         //TODO
         if( userHasModifiedData || data == null ) {
@@ -617,8 +617,7 @@ public class SessionDetailFragment extends Fragment {
 
                     // arg1 set to true only if there was a change, i.e. new data was loaded
                     if( msg.arg1 == TRUE ) {
-                        List<Object[]> contents = ( List<Object[]> ) msg.obj;
-                        frag.applyNewData( contents );
+                        frag.applyNewData( msg.obj );
                     }
                     return;
 
@@ -646,7 +645,7 @@ public class SessionDetailFragment extends Fragment {
         }
 
 
-        public void sendUpdateDoneWithChangesMessage( List<Object[]> newContents ) {
+        public void sendUpdateDoneWithChangesMessage( Object newContents ) {
             sendMessage( Message.obtain( this, MESSAGE_UPDATE_DONE, TRUE, UNDEF, newContents ) );
         }
 
