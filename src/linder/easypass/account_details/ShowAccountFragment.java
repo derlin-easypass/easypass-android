@@ -24,11 +24,10 @@ import static linder.easypass.account_details.AccountActivity.AccountDetailsFrag
 public class ShowAccountFragment extends Fragment implements CompoundButton
         .OnCheckedChangeListener, AccountDetailsFragment {
 
-    private TextView nameView, pseudoView, emailView, notesView, passView;
+    private TextView nameView, pseudoView, emailView, notesView, passView, metadataView;
     private CheckBox checkBox;
     final PasswordTransformationMethod transform = new PasswordTransformationMethod();
     private WeakReference<Account> accountRef;
-
 
     @Override
     public View onCreateView( LayoutInflater inflater, ViewGroup container,
@@ -40,12 +39,13 @@ public class ShowAccountFragment extends Fragment implements CompoundButton
         emailView = ( TextView ) view.findViewById( R.id.details_email );
         notesView = ( TextView ) view.findViewById( R.id.details_notes );
         passView = ( TextView ) view.findViewById( R.id.details_password );
+        metadataView = ( TextView ) view.findViewById( R.id.details_metadata );
         checkBox = ( CheckBox ) view.findViewById( R.id.details_show_password );
         view.findViewById( R.id.show_details_edit_button ).setOnClickListener( ( View
                 .OnClickListener ) getActivity() );
         view.findViewById( R.id.show_details_back_button ).setOnClickListener( ( View
                 .OnClickListener ) getActivity() );
-        updateFields();
+
         return view;
     }
 
@@ -63,11 +63,17 @@ public class ShowAccountFragment extends Fragment implements CompoundButton
 
 
     @Override
+    public void onResume(){
+        super.onResume();
+        updateFields();
+    }
+
     public void updateFields() {
-        // be sure to avoid null pointer exceptions
-        if( accountRef == null ) return;
+        // be sure that onCreate was called and that we have an account
+        // to avoid null pointer exceptions
+        if( nameView == null || getActivity() == null || accountRef == null ) return;
         Account account = accountRef.get();
-        if( account == null || getActivity() == null ) return;
+        if( account == null ) return;
 
         getActivity().setTitle( account.getNameOrDefault() );
 
@@ -77,6 +83,7 @@ public class ShowAccountFragment extends Fragment implements CompoundButton
         emailView.setText( account.getEmailOrDefault() );
         notesView.setText( account.getNotesOrDefault() );
         passView.setText( account.getPasswordOrDefault() );
+        metadataView.setText( metaText(account) );
 
         // password : hide it by default
         final String pass = account.getPasswordOrDefault();
@@ -91,5 +98,10 @@ public class ShowAccountFragment extends Fragment implements CompoundButton
                         passView.setText( isChecked ? pass : hiddenPass );
                     }
                 } );
+    }
+
+
+    private String metaText( Account account ){
+        return String.format( "Created [%s]\nLast updated [%s]", account.getCreatDate(), account.getModifDate() );
     }
 }//end class

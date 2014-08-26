@@ -53,13 +53,17 @@ public class DataWrapper {
 
     public boolean replaceAccount( Account oldAccount, Account newAccount ) {
         if( oldAccount.equals( newAccount ) ) return false;
+        // update meta-data
+        newAccount.setCreatDate( oldAccount.getCreatDate() );
+        newAccount.updateModifDate();
+
         data.remove( oldAccount );
         data.add( newAccount );
         return true;
     }
 
 
-    public List<Map<String,String>> getArrayOfObjects() {
+    public List<Map<String,String>> getRawData() {
         List<Map<String,String>> array = new ArrayList<Map<String, String>>(  );
 
         for( Account account : data ) {

@@ -37,7 +37,7 @@ import static linder.easypass.EasyPassApplication.TAG;
 import static linder.easypass.EasyPassApplication.showToast;
 import static linder.easypass.account_details.AccountActivity.*;
 
-public class SessionDetailFragment extends Fragment {
+public class SessionDetailFragment extends Fragment{
 
     // keys to the bundle's extras
     private static final String BUNDLE_ARG_FILE_PATH = "path";
@@ -79,19 +79,19 @@ public class SessionDetailFragment extends Fragment {
     private String mCurrentSessionName, mCurrentPassword;
 
 
-    private final DbxFile.Listener mChangeListener = new DbxFile.Listener() {
+    private final DbxFile.Listener mChangeListener = new DbxFile.Listener(){
 
         @Override
-        public void onFileChange( DbxFile file ) {
+        public void onFileChange( DbxFile file ){
             // In case a notification is delivered late, make sure we're still
             // on-screen (sessionFile != null) and still working on the same file.
-            synchronized( sessionFileLock ) {
-                if( file != sessionFile ) {
+            synchronized( sessionFileLock ){
+                if( file != sessionFile ){
                     return;
                 }
             }
 
-            if( userHasModifiedData ) {
+            if( userHasModifiedData ){
                 // User has modified the text locally, so we no longer care
                 // about external changes.
                 return;
@@ -99,13 +99,13 @@ public class SessionDetailFragment extends Fragment {
 
             boolean currentIsLatest;
             boolean newerIsCached = false;
-            try {
+            try{
                 currentIsLatest = file.getSyncStatus().isLatest;
 
-                if( !currentIsLatest ) {
+                if( !currentIsLatest ){
                     newerIsCached = file.getNewerStatus().isCached;
                 }
-            } catch( DbxException e ) {
+            }catch( DbxException e ){
                 Log.w( TAG, "Failed to get sync status", e );
                 return;
             }
@@ -113,7 +113,7 @@ public class SessionDetailFragment extends Fragment {
             handler.sendIsShowingLatestMessage( currentIsLatest );
 
             // kick off an update if necessary
-            if( newerIsCached || !mHasLoadedAnyData ) {
+            if( newerIsCached || !mHasLoadedAnyData ){
                 handler.sendDoUpdateMessage();
             }
         }
@@ -125,11 +125,11 @@ public class SessionDetailFragment extends Fragment {
      * ****************************************************************/
 
 
-    public SessionDetailFragment() {
+    public SessionDetailFragment(){
     }
 
 
-    public static SessionDetailFragment getInstance( DbxPath path, String password ) {
+    public static SessionDetailFragment getInstance( DbxPath path, String password ){
         SessionDetailFragment fragment = new SessionDetailFragment();
         Bundle args = new Bundle();
         args.putString( BUNDLE_ARG_FILE_PATH, path.toString() );
@@ -144,32 +144,42 @@ public class SessionDetailFragment extends Fragment {
 
 
     @Override
-    public View onCreateView( LayoutInflater inflater, ViewGroup container,
-                              Bundle savedInstanceState ) {
+    public View onCreateView( LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState ){
         final View view = inflater.inflate( R.layout.fragment_session_detail, container, false );
 
-        mList = ( IndexableListView ) view.findViewById( com.woozzu.android.indexablelistview.R
-                .id.listview );
+        mList = ( IndexableListView ) view.findViewById( com.woozzu.android.indexablelistview.R.id.listview );
         dataWrapper = new DataWrapper( null, mCurrentSessionName, mCurrentPassword );
-        adapter = new IndexerAdapter( getActivity(), android.R.layout.simple_list_item_1,
-                new ArrayList<String>() );
+        adapter = new IndexerAdapter( getActivity(), android.R.layout.simple_list_item_1, new ArrayList<String>() );
         adapter.setDataWrapperReference( dataWrapper );
         mList.setAdapter( adapter );
         mList.setFastScrollEnabled( true );
+
+        // show the context menu for the item on long click.
+        // note: registerForContextMenu has the same effect as adding an mList.setOnItemLongClickListener with the
+        // action:
+        //        mList.showContextMenuForChild( view );
+        //        return true;
+        //
         registerForContextMenu( mList );
-        mList.setOnItemClickListener( new AdapterView.OnItemClickListener() {
+
+        // one click on an item opens the "detail" view of the account entry
+        mList.setOnItemClickListener( new AdapterView.OnItemClickListener(){
             @Override
-            public void onItemClick( AdapterView<?> parent, View view, int position, long id ) {
-                mList.showContextMenuForChild( view );
+            public void onItemClick( AdapterView<?> parent, final View view, final int position, final long id ){
+                String accountName = mList.getItemAtPosition( position ).toString();
+                if( accountName == null ) return;
+                Account account = dataWrapper.getAccount( accountName );
+                startEditShowActivityForResult( account, true );
             }
         } );
+
         // adds a listener to filter the accounts on text change
         inputSearch = ( EditText ) view.findViewById( R.id.inputSearch );
         inputSearch.addTextChangedListener( new TextWatcherAdapter( inputSearch,
-                new TextWatcherAdapter.TextWatcherListener() {
+                new TextWatcherAdapter.TextWatcherListener(){
 
             @Override
-            public void onTextChanged( EditText view, String text ) {
+            public void onTextChanged( EditText view, String text ){
                 adapter.getFilter().filter( text );
             }
         } ) );
@@ -187,43 +197,46 @@ public class SessionDetailFragment extends Fragment {
      * on activity result (from account details activity)
      * ****************************************************************/
     @Override
-    public void onActivityResult( int requestCode, int resultCode, Intent data ) {
+    public void onActivityResult( int requestCode, int resultCode, Intent data ){
         Log.d( TAG, "On activity result." );
-        if( requestCode == ACCOUNT_ACTIVITY_REQUEST_CODE ) {
-            if( resultCode == Activity.RESULT_OK ) {
+        // return from the show details/edit account
+        if( requestCode == ACCOUNT_ACTIVITY_REQUEST_CODE ){ // show and/or edit existing account
+
+            if( resultCode == Activity.RESULT_OK ){  // check for edition
 
                 Bundle extras = data.getExtras();
 
                 // updates the data with the possible modifications
-                Account originalAccount = dataWrapper.getAccount( extras.getString(
-                        EXTRA_ORIGINAL_ACCOUNT_NAME_kEY ) );
-                Account editedAccount = new Gson().fromJson( extras.getString( EXTRA_ACCOUNT_KEY
-                ), Account.class );
+                Account originalAccount = dataWrapper.getAccount( extras.getString( EXTRA_ORIGINAL_ACCOUNT_NAME_kEY ) );
+                Account editedAccount = new Gson().fromJson( extras.getString( EXTRA_ACCOUNT_KEY ), Account.class );
 
-                // if return false, it means the two accounts are identical
+                // if this returns false, it means the two accounts are identical --> nothing to do
                 if( !dataWrapper.replaceAccount( originalAccount, editedAccount ) ) return;
                 String oldName = originalAccount.getNameOrDefault();
 
-                if( !originalAccount.getNameOrDefault().equals( editedAccount.getNameOrDefault()
-                ) ) {
+                if( !originalAccount.getNameOrDefault().equals( // the account name was modified
+                        editedAccount.getNameOrDefault() ) ){
+                    // update the list adapter of this fragment
                     int position = adapter.getPosition( oldName );
                     adapter.remove( oldName );
                     adapter.insert( editedAccount.getNameOrDefault(), position );
                     adapter.notifyDataSetChanged();
                 }
+                // mark the data as modified
                 userHasModifiedData = true;
             }
-        } else if( requestCode == ACCOUNT_ACTIVITY_NEW_REQUEST_CODE ) {
-            Account account = new Gson().fromJson( data.getStringExtra( EXTRA_ACCOUNT_KEY ),
-                    Account.class );
-            if( account.getName() == null ) return;
+        }else if( requestCode == ACCOUNT_ACTIVITY_NEW_REQUEST_CODE && resultCode == RESULT_OK ){ // new account creation
+
+            Account account = new Gson().fromJson( data.getStringExtra( EXTRA_ACCOUNT_KEY ), Account.class );
+            if( account.getNameOrDefault().isEmpty() ) return; // no name = no account ^^
             dataWrapper.addAccount( account );
             userHasModifiedData = true;
-            // clears and add to keep the items sorted (sorting made bade datawrapper)
+            // clears and add to keep the items sorted (sorting made by the datawrapper)
             adapter.clear();
             adapter.addAll( dataWrapper.getAccountNames() );
             adapter.notifyDataSetChanged();
-        } else {
+
+        }else{  // should not happen
             super.onActivityResult( requestCode, resultCode, data );
         }
     }
@@ -235,7 +248,7 @@ public class SessionDetailFragment extends Fragment {
 
 
     @Override
-    public void onResume() {
+    public void onResume(){
         super.onResume();
 
         //        userHasModifiedData = false;
@@ -250,7 +263,7 @@ public class SessionDetailFragment extends Fragment {
         getActivity().setTitle( sessionName );
 
         DbxAccount dbAccount = DboxConfig.getAccountManager( getActivity() ).getLinkedAccount();
-        if( dbAccount == null ) {
+        if( dbAccount == null ){
             Log.e( TAG, "No linked account." );
             return;
         }
@@ -258,21 +271,21 @@ public class SessionDetailFragment extends Fragment {
         errorMessageView.setVisibility( View.GONE );
         loadingSpinnerView.setVisibility( View.VISIBLE );
 
-        try {
+        try{
             mFileUseSemaphore.acquire();
-        } catch( InterruptedException e ) {
+        }catch( InterruptedException e ){
             throw new RuntimeException( e );
         }
 
-        try {
+        try{
             DbxFileSystem fs = DbxFileSystem.forAccount( dbAccount );
-            try {
+            try{
                 sessionFile = fs.open( path );
-            } catch( DbxException.NotFound e ) {
+            }catch( DbxException.NotFound e ){
                 //todo
                 sessionFile = fs.create( path );
             }
-        } catch( DbxException e ) {
+        }catch( DbxException e ){
             Log.e( TAG, "failed to open or create file.", e );
             return;
         }
@@ -280,9 +293,9 @@ public class SessionDetailFragment extends Fragment {
         sessionFile.addListener( mChangeListener );
 
         boolean latest;
-        try {
+        try{
             latest = sessionFile.getSyncStatus().isLatest;
-        } catch( DbxException e ) {
+        }catch( DbxException e ){
             Log.w( TAG, "Failed to get sync status", e );
             return;
         }
@@ -299,17 +312,17 @@ public class SessionDetailFragment extends Fragment {
 
 
     @Override
-    public void onPause() {
+    public void onPause(){
         super.onPause();
 
-        synchronized( sessionFileLock ) {
+        synchronized( sessionFileLock ){
             sessionFile.removeListener( mChangeListener );
 
             // If the contents have changed, write them back to Dropbox
-            if( userHasModifiedData && sessionFile != null ) {
+            if( userHasModifiedData && sessionFile != null ){
                 // true : asks the thread to close the file after write
                 startWriteLocalChangesThread( true );
-            } else {
+            }else{
                 sessionFile.close();
                 sessionFile = null;
                 mFileUseSemaphore.release();
@@ -322,13 +335,13 @@ public class SessionDetailFragment extends Fragment {
      * option menu management
      * ****************************************************************/
     @Override
-    public void onCreateOptionsMenu( Menu menu, MenuInflater inflater ) {
+    public void onCreateOptionsMenu( Menu menu, MenuInflater inflater ){
         super.onCreateOptionsMenu( menu, inflater );
 
         MenuItem newAccountMenu = menu.add( R.string.menu_new_account );
-        newAccountMenu.setOnMenuItemClickListener( new MenuItem.OnMenuItemClickListener() {
+        newAccountMenu.setOnMenuItemClickListener( new MenuItem.OnMenuItemClickListener(){
             @Override
-            public boolean onMenuItemClick( MenuItem item ) {
+            public boolean onMenuItemClick( MenuItem item ){
                 Intent showIntent = new Intent( getActivity(), AccountActivity.class );
                 showIntent.putExtra( EXTRA_REQUEST_CODE_KEY, NEW_REQUEST_CODE );
                 startActivityForResult( showIntent, ACCOUNT_ACTIVITY_NEW_REQUEST_CODE );
@@ -337,9 +350,9 @@ public class SessionDetailFragment extends Fragment {
         } );
 
         MenuItem settingsMenu = menu.add( R.string.settings );
-        settingsMenu.setOnMenuItemClickListener( new MenuItem.OnMenuItemClickListener() {
+        settingsMenu.setOnMenuItemClickListener( new MenuItem.OnMenuItemClickListener(){
             @Override
-            public boolean onMenuItemClick( MenuItem item ) {
+            public boolean onMenuItemClick( MenuItem item ){
                 startActivity( new Intent( getActivity(), SettingsActivity.class ) );
                 return true;
             }
@@ -352,11 +365,9 @@ public class SessionDetailFragment extends Fragment {
 
 
     @Override
-    public void onCreateContextMenu( ContextMenu menu, View v, ContextMenu.ContextMenuInfo
-            menuInfo ) {
-        if( v.getId() == R.id.listview ) {
-            AdapterView.AdapterContextMenuInfo info = ( AdapterView.AdapterContextMenuInfo )
-                    menuInfo;
+    public void onCreateContextMenu( ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo ){
+        if( v.getId() == R.id.listview ){
+            AdapterView.AdapterContextMenuInfo info = ( AdapterView.AdapterContextMenuInfo ) menuInfo;
             menu.setHeaderTitle( adapter.getItem( info.position ) );
             menu.add( Menu.NONE, MENU_COPY_PASS, Menu.NONE, R.string.menu_copy_pass );
             menu.add( Menu.NONE, MENU_COPY_PSEUDO, Menu.NONE, R.string.menu_copy_pseudo );
@@ -368,21 +379,20 @@ public class SessionDetailFragment extends Fragment {
 
 
     @Override
-    public boolean onContextItemSelected( MenuItem item ) {
-        AdapterView.AdapterContextMenuInfo info = ( AdapterView.AdapterContextMenuInfo ) item
-                .getMenuInfo();
+    public boolean onContextItemSelected( MenuItem item ){
+        AdapterView.AdapterContextMenuInfo info = ( AdapterView.AdapterContextMenuInfo ) item.getMenuInfo();
         int menuItemIndex = item.getItemId();
         final String accountName = mList.getItemAtPosition( info.position ).toString();
 
-        switch( menuItemIndex ) {
+        switch( menuItemIndex ){
 
             case MENU_COPY_PASS:
                 String pass = dataWrapper.getAccount( accountName ).getPassword();
                 String msg;
-                if( pass != null && !pass.isEmpty() ) {
+                if( pass != null && !pass.isEmpty() ){
                     Util.copyToClipBoard( getActivity(), accountName + ":pass", pass );
                     msg = "Password copied to clipboard";
-                } else {
+                }else{
                     msg = "Copy failed : password is empty !";
                 }
                 showToast( msg );
@@ -390,10 +400,10 @@ public class SessionDetailFragment extends Fragment {
 
             case MENU_COPY_PSEUDO:
                 String pseudo = dataWrapper.getAccount( accountName ).getPseudo();
-                if( pseudo != null && !pseudo.isEmpty() ) {
+                if( pseudo != null && !pseudo.isEmpty() ){
                     Util.copyToClipBoard( getActivity(), accountName + ":pseudo", pseudo );
                     msg = "Pseudo copied to clipboard";
-                } else {
+                }else{
                     msg = "Pseudo is empty !";
                 }
                 showToast( msg );
@@ -401,13 +411,8 @@ public class SessionDetailFragment extends Fragment {
 
             case MENU_SHOW_DETAILS:
             case MENU_EDIT:
-                Account account = dataWrapper.getAccount( accountName );
-                if( account == null ) break;
-                Intent showIntent = new Intent( getActivity(), AccountActivity.class );
-                showIntent.putExtra( Intent.EXTRA_TEXT, new Gson().toJson( account ) );
-                showIntent.putExtra( EXTRA_REQUEST_CODE_KEY, menuItemIndex == MENU_SHOW_DETAILS ?
-                        SHOW_REQUEST_CODE : EDIT_REQUEST_CODE );
-                startActivityForResult( showIntent, ACCOUNT_ACTIVITY_REQUEST_CODE );
+                startEditShowActivityForResult( dataWrapper.getAccount( accountName ),
+                        menuItemIndex == MENU_SHOW_DETAILS );
 
                 break;
 
@@ -416,8 +421,8 @@ public class SessionDetailFragment extends Fragment {
                 builder.setMessage( "Are you sure ?" ).setCancelable( false ).setTitle( "Confirm " +
                         "" + "delete" );
 
-                builder.setPositiveButton( "YES", new DialogInterface.OnClickListener() {
-                    public void onClick( DialogInterface dialog, int id ) {
+                builder.setPositiveButton( "YES", new DialogInterface.OnClickListener(){
+                    public void onClick( DialogInterface dialog, int id ){
                         dataWrapper.removeAccount( accountName );
                         adapter.remove( accountName );
                         adapter.notifyDataSetChanged();
@@ -425,8 +430,8 @@ public class SessionDetailFragment extends Fragment {
                     }
                 } );
 
-                builder.setNegativeButton( "NO", new DialogInterface.OnClickListener() {
-                    public void onClick( DialogInterface dialog, int id ) {
+                builder.setNegativeButton( "NO", new DialogInterface.OnClickListener(){
+                    public void onClick( DialogInterface dialog, int id ){
                         dialog.cancel();
                     }
                 } );
@@ -436,31 +441,41 @@ public class SessionDetailFragment extends Fragment {
         }// end switch
         return true;
     }
+
+
+    private void startEditShowActivityForResult( Account account, boolean showDetailsOnly ){
+        if( account == null ) return;
+        Intent showIntent = new Intent( getActivity(), AccountActivity.class );
+        showIntent.putExtra( Intent.EXTRA_TEXT, new Gson().toJson( account ) );
+        showIntent.putExtra( EXTRA_REQUEST_CODE_KEY, showDetailsOnly ? SHOW_REQUEST_CODE : EDIT_REQUEST_CODE );
+        startActivityForResult( showIntent, ACCOUNT_ACTIVITY_REQUEST_CODE );
+    }//end
+
     /* *****************************************************************
      * sync management
      * ****************************************************************/
 
 
-    private void startUpdateOnBackgroundThread() {
-        new Thread( new Runnable() {
+    private void startUpdateOnBackgroundThread(){
+        new Thread( new Runnable(){
             @Override
-            public void run() {
-                synchronized( sessionFileLock ) {
+            public void run(){
+                synchronized( sessionFileLock ){
                     // do nothing is the file is null or if the data where modified locally
-//                    if( sessionFile == null || userHasModifiedData ) {
-//                        return;
-//                    }
-                    if( sessionFile == null ) {
+                    //                    if( sessionFile == null || userHasModifiedData ) {
+                    //                        return;
+                    //                    }
+                    if( sessionFile == null ){
                         handler.sendLoadFailedMessage( "Error : the session file is null..." );
                         return;
-                    }else if(userHasModifiedData ) {
+                    }else if( userHasModifiedData ){
                         handler.sendUpdateDoneWithoutChangesMessage();
                         return;
                     }
                     boolean updated;
-                    try {
+                    try{
                         updated = sessionFile.update();
-                    } catch( DbxException e ) {
+                    }catch( DbxException e ){
                         Log.e( TAG, "failed to update file", e );
                         handler.sendLoadFailedMessage( e.toString() );
                         return;
@@ -468,21 +483,21 @@ public class SessionDetailFragment extends Fragment {
 
                     // if some data where already loaded and there is no change,
                     // doesn't bother to reread the file and returns
-                    if( mHasLoadedAnyData && !updated ) {
+                    if( mHasLoadedAnyData && !updated ){
                         handler.sendUpdateDoneWithoutChangesMessage();
                         return;
                     }
 
                     // from here, either to data are loaded for the first time,
                     // or there was an external change in the sessionFile
-                    try {
+                    try{
                         Log.d( TAG, "starting read" );
-                        Object contents = new JsonManager()
-                                .deserialize( CRYPTO_ALGORITHM, sessionFile.getReadStream(),
-                                        mCurrentPassword, new TypeToken<ArrayList<HashMap<String,String>>>() {
+                        Object contents = new JsonManager().deserialize( CRYPTO_ALGORITHM,
+                                sessionFile.getReadStream(), mCurrentPassword,
+                                new TypeToken<ArrayList<HashMap<String, String>>>(){
                         }.getType() );
 
-                        if( contents != null ) {
+                        if( contents != null ){
                             mHasLoadedAnyData = true;
                         }
                         Log.d( TAG, "read done" );
@@ -490,19 +505,18 @@ public class SessionDetailFragment extends Fragment {
                         // asks the handler to update the view
                         handler.sendUpdateDoneWithChangesMessage( contents );
 
-                    } catch( IOException e ) {
+                    }catch( IOException e ){
                         Log.e( TAG, "failed to read file", e );
-                        if( !mHasLoadedAnyData ) {
-                            handler.sendLoadFailedMessage( getString( R.string.error_failed_load
-                            ) );
+                        if( !mHasLoadedAnyData ){
+                            handler.sendLoadFailedMessage( getString( R.string.error_failed_load ) );
                         }
 
-                    } catch( JsonManager.WrongCredentialsException e ) {
+                    }catch( JsonManager.WrongCredentialsException e ){
                         //TODO
                         handler.sendLoadFailedMessage( "Wrong credentials" );
                         e.printStackTrace();
 
-                    } catch( Exception e ) {
+                    }catch( Exception e ){
                         handler.sendLoadFailedMessage( "Sorry, but an unknown error occured" );
                         e.printStackTrace();
 
@@ -513,24 +527,24 @@ public class SessionDetailFragment extends Fragment {
     }
 
 
-    private void startWriteLocalChangesThread( final boolean closeFileAfterWrite ) {
+    private void startWriteLocalChangesThread( final boolean closeFileAfterWrite ){
 
         // Start a thread to do the write.
-        new Thread( new Runnable() {
+        new Thread( new Runnable(){
             @Override
-            public void run() {
+            public void run(){
                 Log.d( TAG, "starting write" );
-                synchronized( sessionFileLock ) {
-                    try {
-                        new JsonManager().serialize( dataWrapper.getArrayOfObjects(),
-                                CRYPTO_ALGORITHM, sessionFile.getWriteStream(), mCurrentPassword );
+                synchronized( sessionFileLock ){
+                    try{
+                        new JsonManager().serialize( dataWrapper.getRawData(), CRYPTO_ALGORITHM,
+                                sessionFile.getWriteStream(), mCurrentPassword );
                         Log.d( TAG, "write done" );
                         userHasModifiedData = false;
-                    } catch( Exception e ) {
+                    }catch( Exception e ){
                         Log.e( TAG, "failed to write to file", e );
                     }
                     // if asked, closes the file
-                    if( closeFileAfterWrite ) {
+                    if( closeFileAfterWrite ){
                         sessionFile.close();
                         sessionFile = null;
                         mFileUseSemaphore.release();
@@ -542,10 +556,10 @@ public class SessionDetailFragment extends Fragment {
     }// end startWriteLocalChanges
 
 
-    private void applyNewData( Object data ) {
-        // if the data where modified, do nothing
+    private void applyNewData( Object data ){
+        // if the data were modified, do nothing
         //TODO
-        if( userHasModifiedData || data == null ) {
+        if( userHasModifiedData || data == null ){
             return;
         }
         // updates the wrapper and the list adapter
@@ -564,7 +578,7 @@ public class SessionDetailFragment extends Fragment {
      * Message handler
      * ****************************************************************/
 
-    private static class DbxLoadHandler extends Handler {
+    private static class DbxLoadHandler extends Handler{
 
         private final WeakReference<SessionDetailFragment> fragment;
 
@@ -576,38 +590,37 @@ public class SessionDetailFragment extends Fragment {
         private static final int TRUE = 1, FALSE = 0, UNDEF = -1;
 
 
-        public DbxLoadHandler( SessionDetailFragment containingFragment ) {
+        public DbxLoadHandler( SessionDetailFragment containingFragment ){
             fragment = new WeakReference<SessionDetailFragment>( containingFragment );
         }
 
 
         @Override
-        public void handleMessage( Message msg ) {
+        public void handleMessage( Message msg ){
             SessionDetailFragment frag = fragment.get();
-            if( frag == null ) {
+            if( frag == null ){
                 return;
             }
 
-            switch( msg.what ) {
+            switch( msg.what ){
 
                 case MESSAGE_IS_SHOWING_LATEST:
                     // arg1 : true if the file is the latest version
-                    frag.oldVersionWarningView.setVisibility( msg.arg1 == TRUE ? View.GONE : View
-                            .VISIBLE );
+                    frag.oldVersionWarningView.setVisibility( msg.arg1 == TRUE ? View.GONE : View.VISIBLE );
                     return;
 
                 case MESSAGE_DO_UPDATE:
                     // updates only if the user didn't modify the data
-                    if( frag.userHasModifiedData ) {
+                    if( frag.userHasModifiedData ){
                         sendUpdateDoneWithoutChangesMessage();
-                    } else {
+                    }else{
                         frag.startUpdateOnBackgroundThread();
                     }
 
                     return;
 
                 case MESSAGE_UPDATE_DONE:
-                    if( frag.userHasModifiedData ) {
+                    if( frag.userHasModifiedData ){
                         Log.e( TAG, "Somehow user changed text while an update was in progress!" );
                     }
 
@@ -616,7 +629,7 @@ public class SessionDetailFragment extends Fragment {
                     frag.errorMessageView.setVisibility( View.GONE );
 
                     // arg1 set to true only if there was a change, i.e. new data was loaded
-                    if( msg.arg1 == TRUE ) {
+                    if( msg.arg1 == TRUE ){
                         frag.applyNewData( msg.obj );
                     }
                     return;
@@ -634,28 +647,27 @@ public class SessionDetailFragment extends Fragment {
         }
 
 
-        public void sendIsShowingLatestMessage( boolean isLatestVersion ) {
-            sendMessage( Message.obtain( this, MESSAGE_IS_SHOWING_LATEST,
-                    isLatestVersion ? TRUE : FALSE, UNDEF ) );
+        public void sendIsShowingLatestMessage( boolean isLatestVersion ){
+            sendMessage( Message.obtain( this, MESSAGE_IS_SHOWING_LATEST, isLatestVersion ? TRUE : FALSE, UNDEF ) );
         }
 
 
-        public void sendDoUpdateMessage() {
+        public void sendDoUpdateMessage(){
             sendMessage( Message.obtain( this, MESSAGE_DO_UPDATE ) );
         }
 
 
-        public void sendUpdateDoneWithChangesMessage( Object newContents ) {
+        public void sendUpdateDoneWithChangesMessage( Object newContents ){
             sendMessage( Message.obtain( this, MESSAGE_UPDATE_DONE, TRUE, UNDEF, newContents ) );
         }
 
 
-        public void sendUpdateDoneWithoutChangesMessage() {
+        public void sendUpdateDoneWithoutChangesMessage(){
             sendMessage( Message.obtain( this, MESSAGE_UPDATE_DONE, FALSE, UNDEF ) );
         }
 
 
-        public void sendLoadFailedMessage( String errorText ) {
+        public void sendLoadFailedMessage( String errorText ){
             sendMessage( Message.obtain( this, MESSAGE_LOAD_FAILED, errorText ) );
         }
     }

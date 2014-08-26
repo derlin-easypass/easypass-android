@@ -32,7 +32,6 @@ public class EditAccountFragment extends Fragment implements CompoundButton
 
     private WeakReference<Account> accountRef;
 
-
     @Override
     public View onCreateView( LayoutInflater inflater, ViewGroup container,
                               Bundle savedInstanceState ) {
@@ -52,7 +51,7 @@ public class EditAccountFragment extends Fragment implements CompoundButton
         view.findViewById( R.id.edit_details_cancel_button ).setOnClickListener( ( View
                 .OnClickListener ) getActivity() );
         view.findViewById( R.id.edit_details_save_button ).setOnClickListener( this );
-        updateFields();
+
         return view;
     }
 
@@ -62,7 +61,6 @@ public class EditAccountFragment extends Fragment implements CompoundButton
         editPass.setTransformationMethod( isChecked ? null : transform );
     }
 
-
     @Override
     public void setWeakReference( Account account ) {
         accountRef = new WeakReference<Account>( account );
@@ -70,7 +68,17 @@ public class EditAccountFragment extends Fragment implements CompoundButton
 
 
     @Override
+    public void onResume(){
+        super.onResume();
+        updateFields();
+    }
+
+
     public void updateFields() {
+        // be sure that onCreate was called and that we have an account
+        // to avoid null pointer exceptions
+        if( editName == null || getActivity() == null || accountRef == null ) return;
+
         Account account = accountRef.get();
         if( account == null || getActivity() == null ) return;
         editName.setText( account.getNameOrDefault() );
