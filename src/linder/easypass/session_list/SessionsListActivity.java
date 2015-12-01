@@ -88,7 +88,8 @@ public class SessionsListActivity extends FragmentActivity implements SessionsLi
 
 
     private void switchToDetailsActivity( DbxPath path, String password ) {
-        if( mTwoPane ) {
+
+        if( findViewById( R.id.note_detail_container ) != null){ //mTwoPane ) {
             SessionDetailFragment fragment = SessionDetailFragment.getInstance( path, password );
             getSupportFragmentManager().beginTransaction().replace( R.id.note_detail_container,
                     fragment ).commit();
